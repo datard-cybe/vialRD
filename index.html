@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="es-DO">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0a0a0a" />
+  <title>VialRD — Datos viales abiertos de República Dominicana</title>
+  <meta name="description" content="Plataforma cívica de datos viales abiertos. Mapeamos muertes, baches y policías acostados sin señalizar. Ruteo consciente del riesgo. 100% gratis, 100% dominicano." />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="VialRD — Datos viales abiertos de RD" />
+  <meta property="og:description" content="65% de las muertes viales en RD son motoristas. Solo el 0.3% tiene licencia. Aquí están los datos." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://vialrd.com" />
+
+  <!-- Fuentes: Fraunces (display editorial) + IBM Plex Sans (body) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,800;9..144,900&family=IBM+Plex+Mono:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23E63946'/%3E%3Ctext x='50' y='68' font-family='serif' font-size='60' font-weight='900' text-anchor='middle' fill='white'%3EV%3C/text%3E%3C/svg%3E" />
+</head>
+<body>
+
+  <!-- ════════════════════════════════════════════════════ -->
+  <!-- TOP BAR — minimal, editorial                          -->
+  <!-- ════════════════════════════════════════════════════ -->
+  <header class="topbar">
+    <a href="/" class="brand">
+      <span class="brand__mark">▮</span>
+      <span class="brand__name">VialRD</span>
+    </a>
+    <nav class="topnav">
+      <a href="#problema">El problema</a>
+      <a href="#solucion">La solución</a>
+      <a href="/app.html">Mapa</a>
+      <a href="/stats.html">Estadísticas</a>
+      <a href="/api-docs.html">API</a>
+    </nav>
+    <a href="/reportar.html" class="btn btn--primary btn--sm">Reportar hazard</a>
+  </header>
+
+  <!-- ════════════════════════════════════════════════════ -->
+  <!-- HERO — datos crudos al frente                          -->
+  <!-- ════════════════════════════════════════════════════ -->
+  <section class="hero">
+    <div class="hero__grid">
+      <div class="hero__main">
+        <div class="hero__kicker">REPÚBLICA DOMINICANA · 2026</div>
+        <h1 class="hero__title">
+          <span class="hero__num">1,945</span>
+          <span class="hero__label">motoristas muertos en 2025.</span>
+        </h1>
+        <p class="hero__lede">
+          El <strong>65%</strong> de todas las muertes viales del país. Solo el
+          <strong>0.3%</strong> de los 3.5 millones de motoristas tiene licencia activa.
+          <span class="hero__lede-emphasis">Detrás de cada número hay un nombre.</span>
+        </p>
+        <div class="hero__cta">
+          <a href="/app.html" class="btn btn--primary btn--lg">Ver el mapa</a>
+          <a href="#problema" class="btn btn--ghost btn--lg">Conocer los datos</a>
+        </div>
+      </div>
+
+      <aside class="hero__sidebar">
+        <div class="counter">
+          <div class="counter__label">muertes viales en 2026</div>
+          <div class="counter__value" data-counter="fatalities-ytd">—</div>
+          <div class="counter__caption">datos del Opsevi, actualizado semanal</div>
+        </div>
+        <div class="counter counter--alt">
+          <div class="counter__label">reportes ciudadanos</div>
+          <div class="counter__value" data-counter="reports-total">—</div>
+          <div class="counter__caption">baches, policías acostados, cruces peligrosos</div>
+        </div>
+      </aside>
+    </div>
+
+    <div class="hero__ticker">
+      <div class="ticker__track">
+        <span>3.5M motocicletas registradas</span><span>·</span>
+        <span>10,827 licencias activas</span><span>·</span>
+        <span>87% víctimas hombres</span><span>·</span>
+        <span>36% víctimas 18–29 años</span><span>·</span>
+        <span>67.23 muertes por 100,000 habitantes (OMS)</span><span>·</span>
+        <span>573,078 multas sin casco en 2024</span><span>·</span>
+        <span>70% de las multas sin cobrar</span><span>·</span>
+        <!-- duplicado para loop infinito -->
+        <span>3.5M motocicletas registradas</span><span>·</span>
+        <span>10,827 licencias activas</span><span>·</span>
+        <span>87% víctimas hombres</span><span>·</span>
+        <span>36% víctimas 18–29 años</span><span>·</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════ -->
+  <!-- PROBLEMA — números editoriales tipo magazine          -->
+  <!-- ════════════════════════════════════════════════════ -->
+  <section id="problema" class="section section--dark">
+    <div class="section__inner">
+      <div class="section__head">
+        <div class="eyebrow">El problema</div>
+        <h2 class="section__title">
+          Una crisis sobre dos ruedas <em>que ya no podemos ignorar.</em>
+        </h2>
+      </div>
+
+      <div class="stats-grid">
+        <article class="stat-card">
+          <div class="stat-card__num">9,058</div>
+          <div class="stat-card__desc">
+            personas muertas en accidentes de motocicleta entre 2021 y 2025 — más que una guerra civil.
+          </div>
+          <div class="stat-card__source">— Opsevi · Diario Libre</div>
+        </article>
+
+        <article class="stat-card stat-card--accent">
+          <div class="stat-card__num">0.3%</div>
+          <div class="stat-card__desc">
+            de los motoristas dominicanos tiene licencia activa para conducir motocicleta. El 99.7% maneja sin permiso.
+          </div>
+          <div class="stat-card__source">— INTRANT · marzo 2025</div>
+        </article>
+
+        <article class="stat-card">
+          <div class="stat-card__num">85%</div>
+          <div class="stat-card__desc">
+            de las muertes de motoristas ocurre por no llevar casco — confirmado por el propio Presidente Abinader.
+          </div>
+          <div class="stat-card__source">— Presidencia de la República</div>
+        </article>
+
+        <article class="stat-card">
+          <div class="stat-card__num">213</div>
+          <div class="stat-card__desc">
+            motoristas muertos en los primeros cuatro meses de 2026. Dos personas mueren cada día en RD.
+          </div>
+          <div class="stat-card__source">— Opsevi · mayo 2026</div>
+        </article>
+
+        <article class="stat-card stat-card--accent">
+          <div class="stat-card__num">75%</div>
+          <div class="stat-card__desc">
+            de los accidentes involucran motocicletas, según la Ministra de Interior Faride Raful.
+          </div>
+          <div class="stat-card__source">— Ministerio Interior y Policía · abril 2026</div>
+        </article>
+
+        <article class="stat-card">
+          <div class="stat-card__num">573K</div>
+          <div class="stat-card__desc">
+            multas a motoristas por no usar casco en 2024. Más del 70% jamás se cobró.
+          </div>
+          <div class="stat-card__source">— DIGESETT</div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════ -->
+  <!-- LO QUE FALTA — qué Waze y otros NO te dicen           -->
+  <!-- ════════════════════════════════════════════════════ -->
+  <section class="section section--cream">
+    <div class="section__inner">
+      <div class="split">
+        <div class="split__left">
+          <div class="eyebrow eyebrow--dark">Lo que Waze no te dice</div>
+          <h2 class="section__title section__title--dark">
+            La ruta más rápida <em>no es la más segura.</em>
+          </h2>
+          <p class="prose">
+            Las apps comerciales optimizan por velocidad. No mapean policías acostados sin señalizar,
+            no cruzan los reportes ciudadanos con los datos oficiales del Opsevi, y no publican
+            APIs abiertas para que periodistas, ONGs y gobierno puedan trabajar con la información.
+          </p>
+          <p class="prose">
+            <strong>VialRD existe para llenar ese vacío.</strong> Cuando calculas una ruta aquí,
+            te decimos cuántos hazards atraviesas, cuántas muertes recientes hubo cerca, y cuál es
+            el nivel de riesgo. Tú decides.
+          </p>
+        </div>
+
+        <div class="split__right">
+          <div class="comparison">
+            <div class="comparison__row comparison__row--head">
+              <div></div>
+              <div class="comparison__col">Apps comerciales</div>
+              <div class="comparison__col comparison__col--us">VialRD</div>
+            </div>
+            <div class="comparison__row">
+              <div class="comparison__feat">Ruta más rápida</div>
+              <div class="comparison__col">✓</div>
+              <div class="comparison__col comparison__col--us">✓</div>
+            </div>
+            <div class="comparison__row">
+              <div class="comparison__feat">Policías acostados sin pintar</div>
+              <div class="comparison__col">✗</div>
+              <div class="comparison__col comparison__col--us">✓</div>
+            </div>
+            <div class="comparison__row">
+              <div class="comparison__feat">Score de riesgo de la ruta</div>
+              <div class="comparison__col">✗</div>
+              <div class="comparison__col comparison__col--us">✓</div>
+            </div>
+            <div class="comparison__row">
+              <div class="comparison__feat">Datos oficiales Opsevi/DIGESETT</div>
+              <div class="comparison__col">✗</div>
+              <div class="comparison__col comparison__col--us">✓</div>
+            </div>
+            <div class="comparison__row">
+              <div class="comparison__feat">API pública gratis</div>
+              <div class="comparison__col">✗</div>
+              <div class="comparison__col comparison__col--us">✓</div>
+            </div>
+            <div class="comparison__row">
+              <div class="comparison__feat">Hecho en RD</div>
+              <div class="comparison__col">✗</div>
+              <div class="comparison__col comparison__col--us">✓</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════ -->
+  <!-- SOLUCIÓN — features                                    -->
+  <!-- ════════════════════════════════════════════════════ -->
+  <section id="solucion" class="section section--dark">
+    <div class="section__inner">
+      <div class="section__head section__head--center">
+        <div class="eyebrow">La solución</div>
+        <h2 class="section__title">
+          Datos abiertos. Crowdsourcing ciudadano. <em>Ruteo consciente del riesgo.</em>
+        </h2>
+      </div>
+
+      <div class="features">
+        <article class="feature">
+          <div class="feature__icon">⬢</div>
+          <h3>Mapa de calor de muertes</h3>
+          <p>Datos oficiales de DIGESETT y Opsevi cruzados por año, tipo de vehículo y provincia. Por primera vez accesibles al ciudadano.</p>
+        </article>
+
+        <article class="feature">
+          <div class="feature__icon">▲</div>
+          <h3>Reportes ciudadanos</h3>
+          <p>Reporta baches, policías acostados sin señalizar, cruces peligrosos y zonas oscuras. Con foto y geolocalización. Anónimo o con cuenta.</p>
+        </article>
+
+        <article class="feature">
+          <div class="feature__icon">◆</div>
+          <h3>Ruteo con score de riesgo</h3>
+          <p>Cuando pides una ruta, te decimos cuántos hazards atraviesas y muertes recientes hubo cerca. Tú decides si tomas la corta o la segura.</p>
+        </article>
+
+        <article class="feature">
+          <div class="feature__icon">●</div>
+          <h3>API pública gratis</h3>
+          <p>Toda la data, libre de uso para periodistas, investigadores, ONGs y gobierno. Licencia CC BY 4.0.</p>
+        </article>
+
+        <article class="feature">
+          <div class="feature__icon">■</div>
+          <h3>PWA instalable</h3>
+          <p>Funciona como app nativa en tu teléfono. Sin tienda, sin descargas pesadas, sin tracking.</p>
+        </article>
+
+        <article class="feature">
+          <div class="feature__icon">★</div>
+          <h3>Gamificación ciudadana</h3>
+          <p>Puntos, badges y leaderboard por ciudad. Compite con tu vecino por hacer mejor a tu comunidad.</p>
+        </article>
+      </div>
+
+      <div class="cta-band">
+        <h3>Esto es de todos. Empieza ya.</h3>
+        <div class="cta-band__buttons">
+          <a href="/app.html" class="btn btn--primary btn--lg">Abrir el mapa</a>
+          <a href="/reportar.html" class="btn btn--outline btn--lg">Reportar un hazard</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════ -->
+  <!-- FOOTER                                                 -->
+  <!-- ════════════════════════════════════════════════════ -->
+  <footer class="footer">
+    <div class="footer__inner">
+      <div class="footer__col">
+        <div class="brand brand--footer">
+          <span class="brand__mark">▮</span>
+          <span class="brand__name">VialRD</span>
+        </div>
+        <p class="footer__tag">
+          Proyecto cívico independiente.<br />
+          Construido en Santo Domingo, RD.
+        </p>
+      </div>
+      <div class="footer__col">
+        <div class="footer__heading">Producto</div>
+        <a href="/app.html">Mapa</a>
+        <a href="/reportar.html">Reportar</a>
+        <a href="/stats.html">Estadísticas</a>
+        <a href="/api-docs.html">API pública</a>
+      </div>
+      <div class="footer__col">
+        <div class="footer__heading">Datos</div>
+        <a href="https://datos.gob.do" target="_blank" rel="noopener">DIGESETT</a>
+        <a href="https://intrant.gob.do" target="_blank" rel="noopener">INTRANT / Opsevi</a>
+        <a href="https://one.gob.do" target="_blank" rel="noopener">ONE</a>
+      </div>
+      <div class="footer__col">
+        <div class="footer__heading">Comunidad</div>
+        <a href="https://github.com/datard-cybe/vialrd" target="_blank" rel="noopener">GitHub</a>
+        <a href="mailto:contacto@vialrd.com">Email</a>
+      </div>
+    </div>
+    <div class="footer__bottom">
+      <span>© 2026 VialRD · Código AGPL-3.0 · Datos CC BY 4.0</span>
+      <span>Hecho con rabia y esperanza en RD 🇩🇴</span>
+    </div>
+  </footer>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
