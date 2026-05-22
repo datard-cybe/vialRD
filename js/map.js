@@ -84,8 +84,9 @@ const state = {
   map: null,
   deaths: [],
   hazards: [],
+  provinces: [],
   filters: { year: '2025', vehicle: 'motocicleta', province: '' },
-  visibleLayers: { deaths: true, bumps: true, potholes: true, other: false },
+  visibleLayers: { provinces: true, deaths: false, bumps: true, potholes: true, other: false },
   pendingReportLocation: null,
 };
 
@@ -151,18 +152,77 @@ function initMap() {
 
 // ============ Sources y layers ============
 function setupLayers(map) {
-  // ===== Source: muertes (heatmap) =====
+  // ===== Source: provincias (datos oficiales DIGESETT) =====
+  map.addSource('provinces', {
+    type: 'geojson',
+    data: { type: 'FeatureCollection', features: [] }
+  });
+
+  // Círculos proporcionales al número de muertes
+  map.addLayer({
+    id: 'provinces-circles',
+    type: 'circle',
+    source: 'provinces',
+    paint: {
+      'circle-radius': [
+        'interpolate', ['linear'], ['get', 'fatalities'],
+        0, 6,
+        50, 14,
+        200, 24,
+        500, 38,
+        1000, 55,
+        3000, 80
+      ],
+      'circle-color': [
+        'interpolate', ['linear'], ['get', 'fatalities'],
+        0, '#f4c430',     // amarillo
+        100, '#ff8c42',   // naranja
+        500, '#e63946',   // rojo
+        2000, '#8b0000'   // rojo oscuro
+      ],
+      'circle-opacity': 0.65,
+      'circle-stroke-color': '#0a0a0a',
+      'circle-stroke-width': 1.5
+    }
+  });
+
+  // Etiqueta numérica encima del círculo
+  map.addLayer({
+    id: 'provinces-labels',
+    type: 'symbol',
+    source: 'provinces',
+    layout: {
+      'text-field': ['to-string', ['get', 'fatalities']],
+      'text-font': ['Open Sans Regular', 'Arial Unicode MS Regular'],
+      'text-size': [
+        'interpolate', ['linear'], ['get', 'fatalities'],
+        0, 11,
+        500, 14,
+        2000, 18
+      ],
+      'text-allow-overlap': true,
+      'text-ignore-placement': true
+    },
+    paint: {
+      'text-color': '#ffffff',
+      'text-halo-color': '#0a0a0a',
+      'text-halo-width': 1.5
+    }
+  });
+
+  // ===== Source: muertes individuales (incidentes geo) =====
   map.addSource('deaths', {
     type: 'geojson',
     data: { type: 'FeatureCollection', features: [] }
   });
 
-  // Heatmap layer
+  // Heatmap layer (desactivado por defecto, opcional)
   map.addLayer({
     id: 'deaths-heat',
     type: 'heatmap',
     source: 'deaths',
     maxzoom: 14,
+    layout: { visibility: 'none' },
     paint: {
       'heatmap-weight': ['interpolate', ['linear'], ['get', 'weight'], 0, 0, 6, 1],
       'heatmap-intensity': ['interpolate', ['linear'], ['zoom'], 0, 1, 14, 3],
@@ -185,6 +245,7 @@ function setupLayers(map) {
     type: 'circle',
     source: 'deaths',
     minzoom: 11,
+    layout: { visibility: 'none' },
     paint: {
       'circle-radius': ['interpolate', ['linear'], ['zoom'], 11, 4, 18, 12],
       'circle-color': '#e63946',
@@ -244,7 +305,33 @@ function setupLayers(map) {
 
 // ============ Cargar datos a las sources ============
 function applyDataToMap() {
-  const filtered = state.deaths.filter(d => {
+  // Provincias agregadas (DIGESETT)
+  const yearNum = state.filters.year ? parseInt(state.filters.year, 10) : null;
+  const provincesFiltered = state.provinces.filter(p => {
+    if (yearNum && p.year && p.year !== yearNum) return false;
+    return true;
+  });
+
+  // Agrupar por provincia si filtramos año, si no usamos los totales precomputados
+  const provincesAgg = {};
+  provincesFiltered.forEach(p => {
+    if (!provincesAgg[p.province]) {
+      provincesAgg[p.province] = { ...p, fatalities: 0 };
+    }
+    provincesAgg[p.province].fatalities += p.fatalities;
+  });
+
+  const provincesGeo = {
+    type: 'FeatureCollection',
+    features: Object.values(provincesAgg).map(p => ({
+      type: 'Feature',
+      geometry: { type: 'Point', coordinates: [p.lng, p.lat] },
+      properties: p
+    }))
+  };
+
+  // Incidentes individuales
+  const filteredDeaths = state.deaths.filter(d => {
     if (state.filters.year && String(d.year) !== state.filters.year) return false;
     if (state.filters.vehicle && d.vehicle !== state.filters.vehicle) return false;
     if (state.filters.province && d.province !== state.filters.province) return false;
@@ -253,7 +340,7 @@ function applyDataToMap() {
 
   const deathsGeo = {
     type: 'FeatureCollection',
-    features: filtered.map(d => ({
+    features: filteredDeaths.map(d => ({
       type: 'Feature',
       geometry: { type: 'Point', coordinates: [d.lng, d.lat] },
       properties: { ...d, weight: d.fatalities || 1 }
@@ -269,11 +356,14 @@ function applyDataToMap() {
     }))
   };
 
+  if (state.map.getSource('provinces')) state.map.getSource('provinces').setData(provincesGeo);
   if (state.map.getSource('deaths')) state.map.getSource('deaths').setData(deathsGeo);
   if (state.map.getSource('hazards')) state.map.getSource('hazards').setData(hazardsGeo);
 
-  // Actualizar contadores en sidebar
-  document.getElementById('count-deaths').textContent = filtered.length.toLocaleString('es-DO');
+  // Contadores en sidebar
+  const totalFatalitiesVisible = Object.values(provincesAgg).reduce((s, p) => s + p.fatalities, 0);
+  document.getElementById('count-provinces').textContent = totalFatalitiesVisible.toLocaleString('es-DO');
+  document.getElementById('count-deaths').textContent = filteredDeaths.length.toLocaleString('es-DO');
   document.getElementById('count-bumps').textContent =
     state.hazards.filter(h => h.type === 'policia_acostado_no_senalizado').length;
   document.getElementById('count-potholes').textContent =
@@ -281,43 +371,82 @@ function applyDataToMap() {
   document.getElementById('count-other').textContent =
     state.hazards.filter(h => !['policia_acostado_no_senalizado','bache'].includes(h.type)).length;
 
-  document.getElementById('stat-visible-deaths').textContent = filtered.length.toLocaleString('es-DO');
+  document.getElementById('stat-visible-deaths').textContent = totalFatalitiesVisible.toLocaleString('es-DO');
   document.getElementById('stat-visible-hazards').textContent = state.hazards.length;
 }
 
+// Mock provincial fallback (números aproximados basados en DIGESETT 2024)
+const MOCK_PROVINCES = [
+  { province: 'Distrito Nacional', year: 2025, lng: -69.9312, lat: 18.4861, fatalities: 168 },
+  { province: 'Santo Domingo',     year: 2025, lng: -69.8571, lat: 18.5001, fatalities: 312 },
+  { province: 'Santiago',          year: 2025, lng: -70.6970, lat: 19.4517, fatalities: 245 },
+  { province: 'La Vega',           year: 2025, lng: -70.5331, lat: 19.2226, fatalities: 122 },
+  { province: 'San Cristóbal',     year: 2025, lng: -70.1042, lat: 18.4178, fatalities: 105 },
+  { province: 'Puerto Plata',      year: 2025, lng: -70.6970, lat: 19.7892, fatalities: 89 },
+  { province: 'Duarte',            year: 2025, lng: -70.2547, lat: 19.2950, fatalities: 72 },
+  { province: 'San Pedro de Macorís', year: 2025, lng: -69.3066, lat: 18.4539, fatalities: 78 },
+  { province: 'La Romana',         year: 2025, lng: -68.9728, lat: 18.4276, fatalities: 64 },
+  { province: 'La Altagracia',     year: 2025, lng: -68.7058, lat: 18.6155, fatalities: 81 },
+  { province: 'Peravia',           year: 2025, lng: -70.3320, lat: 18.2810, fatalities: 51 },
+  { province: 'Azua',              year: 2025, lng: -70.7350, lat: 18.4534, fatalities: 56 },
+  { province: 'Barahona',          year: 2025, lng: -71.1000, lat: 18.2117, fatalities: 42 },
+  { province: 'Monseñor Nouel',    year: 2025, lng: -70.4082, lat: 18.9347, fatalities: 48 },
+  { province: 'Sánchez Ramírez',   year: 2025, lng: -70.0500, lat: 19.0670, fatalities: 38 },
+  { province: 'San Juan',          year: 2025, lng: -71.2295, lat: 18.8074, fatalities: 47 },
+  { province: 'Espaillat',         year: 2025, lng: -70.5152, lat: 19.5475, fatalities: 41 },
+  { province: 'Hermanas Mirabal',  year: 2025, lng: -70.3678, lat: 19.3725, fatalities: 23 },
+  { province: 'Valverde',          year: 2025, lng: -70.8950, lat: 19.5650, fatalities: 36 },
+  { province: 'Monte Cristi',      year: 2025, lng: -71.6500, lat: 19.8500, fatalities: 28 },
+  { province: 'Dajabón',           year: 2025, lng: -71.7000, lat: 19.5500, fatalities: 19 },
+  { province: 'Santiago Rodríguez',year: 2025, lng: -71.3380, lat: 19.4625, fatalities: 14 },
+  { province: 'Samaná',            year: 2025, lng: -69.3370, lat: 19.2070, fatalities: 32 },
+  { province: 'María Trinidad Sánchez', year: 2025, lng: -69.8500, lat: 19.3917, fatalities: 29 },
+  { province: 'Hato Mayor',        year: 2025, lng: -69.2536, lat: 18.7625, fatalities: 25 },
+  { province: 'El Seibo',          year: 2025, lng: -69.0397, lat: 18.7647, fatalities: 24 },
+  { province: 'Monte Plata',       year: 2025, lng: -69.7848, lat: 18.8074, fatalities: 36 },
+  { province: 'San José de Ocoa',  year: 2025, lng: -70.5042, lat: 18.5447, fatalities: 18 },
+  { province: 'Bahoruco',          year: 2025, lng: -71.4244, lat: 18.5099, fatalities: 21 },
+  { province: 'Independencia',     year: 2025, lng: -71.7250, lat: 18.4942, fatalities: 13 },
+  { province: 'Pedernales',        year: 2025, lng: -71.7497, lat: 17.9942, fatalities: 8 },
+  { province: 'Elías Piña',        year: 2025, lng: -71.7036, lat: 18.8775, fatalities: 17 },
+];
+
 // ============ Cargar datos (Supabase o mock) ============
 async function loadData() {
-  // Intentar Supabase primero
+  // Intentar Supabase primero - provincias
   if (supabaseAPI) {
     try {
-      const heatmap = await supabaseAPI.getHeatmapData({});
-      if (heatmap && heatmap.length > 0) {
-        state.deaths = heatmap.map(d => ({
-          lng: d.lng, lat: d.lat,
-          fatalities: d.fatalities || 1,
-          vehicle: 'motocicleta', // ajustar cuando tengamos más metadata
-          year: 2025,
-          province: 'Distrito Nacional'
+      const { data, error } = await supabaseAPI.supabase.rpc('get_province_heatmap', { year_filter: null });
+      if (!error && data && data.length > 0) {
+        state.provinces = data.map(d => ({
+          province: d.province,
+          year: null,
+          lng: d.lng,
+          lat: d.lat,
+          fatalities: d.fatalities,
+          years_count: d.years_count
         }));
+        console.log(`[VialRD] ${data.length} provincias cargadas de Supabase`);
       }
+    } catch (e) {
+      console.warn('[VialRD] No se pudieron cargar provincias de Supabase:', e.message);
+    }
 
-      const hazards = await supabaseAPI.getHazardsInBbox(
-        [-72.1, 17.4, -68.2, 20.1] // BBOX RD completo
-      );
+    // Hazards crowdsourced
+    try {
+      const hazards = await supabaseAPI.getHazardsInBbox([-72.1, 17.4, -68.2, 20.1]);
       if (hazards && hazards.length > 0) {
         state.hazards = hazards.map(h => ({
-          lng: h.lng, lat: h.lat,
-          type: h.type,
-          desc: h.description,
-          severity: h.severity
+          lng: h.lng, lat: h.lat, type: h.type, desc: h.description, severity: h.severity
         }));
       }
     } catch (e) {
-      console.warn('[VialRD] Error cargando datos de Supabase:', e.message);
+      console.warn('[VialRD] Error cargando hazards:', e.message);
     }
   }
 
-  // Fallback a mock si no hay datos
+  // Fallback a mock
+  if (state.provinces.length === 0) state.provinces = [...MOCK_PROVINCES];
   if (state.deaths.length === 0) state.deaths = [...MOCK_DEATHS];
   if (state.hazards.length === 0) state.hazards = [...MOCK_HAZARDS];
 
@@ -326,6 +455,20 @@ async function loadData() {
 
 // ============ Popups al hacer click ============
 function setupPopups(map) {
+  // Popup en círculos de provincia
+  map.on('click', 'provinces-circles', (e) => {
+    const f = e.features[0];
+    const p = f.properties;
+    new maplibregl.Popup({ closeButton: true, maxWidth: '300px' })
+      .setLngLat(e.lngLat)
+      .setHTML(`
+        <div class="popup-title">${p.province}</div>
+        <div class="popup-meta">Fuente: DIGESETT · datos.gob.do</div>
+        <div class="popup-stat">${Number(p.fatalities).toLocaleString('es-DO')} fallecidos</div>
+        <div class="popup-desc">${p.years_count ? `Datos acumulados de ${p.years_count} años` : 'Datos del año seleccionado'}</div>
+      `)
+      .addTo(map);
+  });
   // Popup en muertes (zoom alto)
   map.on('click', 'deaths-points', (e) => {
     const f = e.features[0];
@@ -373,7 +516,7 @@ function setupPopups(map) {
   });
 
   // Cursor pointer al hover
-  ['deaths-points', ...hazardLayers].forEach(layerId => {
+  ['provinces-circles', 'deaths-points', ...hazardLayers].forEach(layerId => {
     map.on('mouseenter', layerId, () => { map.getCanvas().style.cursor = 'pointer'; });
     map.on('mouseleave', layerId, () => { map.getCanvas().style.cursor = ''; });
   });
@@ -415,6 +558,7 @@ function setupReportClick(map) {
 // ============ Toggle de capas ============
 function setupLayerToggles(map) {
   const bindings = [
+    { input: 'layer-provinces', layers: ['provinces-circles', 'provinces-labels'] },
     { input: 'layer-deaths', layers: ['deaths-heat', 'deaths-points'] },
     { input: 'layer-bumps', layers: ['hazards-bumps'] },
     { input: 'layer-potholes', layers: ['hazards-potholes'] },

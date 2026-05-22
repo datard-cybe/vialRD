@@ -53,9 +53,15 @@
       <div class="panel-section">
         <div class="panel-eyebrow">Capas activas</div>
         <label class="layer-toggle">
-          <input type="checkbox" id="layer-deaths" checked />
+          <input type="checkbox" id="layer-provinces" checked />
+          <span class="layer-color" style="background: var(--c-accent); border-radius:0"></span>
+          <span class="layer-name">Muertes por provincia · DIGESETT</span>
+          <span class="layer-count" id="count-provinces">—</span>
+        </label>
+        <label class="layer-toggle">
+          <input type="checkbox" id="layer-deaths" />
           <span class="layer-color" style="background: var(--c-accent)"></span>
-          <span class="layer-name">Muertes oficiales</span>
+          <span class="layer-name">Incidentes geolocalizados</span>
           <span class="layer-count" id="count-deaths">—</span>
         </label>
         <label class="layer-toggle">
