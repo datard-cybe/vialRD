@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="es-DO">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0a0a0a" />
+  <title>Mapa — VialRD</title>
+  <meta name="description" content="Mapa interactivo de muertes viales, baches y policías acostados de República Dominicana." />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,800;9..144,900&family=IBM+Plex+Mono:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- MapLibre GL JS (open source, sin API key) -->
+  <link href="https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/map.css" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23E63946'/%3E%3Ctext x='50' y='68' font-family='serif' font-size='60' font-weight='900' text-anchor='middle' fill='white'%3EV%3C/text%3E%3C/svg%3E" />
+
+  <script>
+    window.__ENV = {
+      SUPABASE_URL: 'https://bmazvbpclpeprgdiijhw.supabase.co',
+      SUPABASE_ANON_KEY: 'sb_publishable_cyBfZu00XW6-qe6V_IbtnQ_5QTJOHjQ'
+    };
+  </script>
+</head>
+<body class="app-body">
+
+  <!-- Top bar minimal -->
+  <header class="topbar topbar--app">
+    <a href="/" class="brand">
+      <span class="brand__mark">▮</span>
+      <span class="brand__name">VialRD</span>
+    </a>
+    <nav class="topnav">
+      <a href="/">Inicio</a>
+      <a href="/app.html" class="active">Mapa</a>
+      <a href="/stats.html">Estadísticas</a>
+      <a href="/api-docs.html">API</a>
+    </nav>
+    <a href="/reportar.html" class="btn btn--primary btn--sm">+ Reportar</a>
+  </header>
+
+  <!-- Layout del mapa -->
+  <main class="map-shell">
+
+    <!-- Sidebar de capas + filtros -->
+    <aside class="map-panel" id="mapPanel">
+      <button class="panel-toggle" id="panelToggle" aria-label="Colapsar panel">‹</button>
+
+      <div class="panel-section">
+        <div class="panel-eyebrow">Capas activas</div>
+        <label class="layer-toggle">
+          <input type="checkbox" id="layer-deaths" checked />
+          <span class="layer-color" style="background: var(--c-accent)"></span>
+          <span class="layer-name">Muertes oficiales</span>
+          <span class="layer-count" id="count-deaths">—</span>
+        </label>
+        <label class="layer-toggle">
+          <input type="checkbox" id="layer-bumps" checked />
+          <span class="layer-color" style="background: var(--c-yellow)"></span>
+          <span class="layer-name">Policías acostados</span>
+          <span class="layer-count" id="count-bumps">—</span>
+        </label>
+        <label class="layer-toggle">
+          <input type="checkbox" id="layer-potholes" checked />
+          <span class="layer-color" style="background: #ff8c42"></span>
+          <span class="layer-name">Baches</span>
+          <span class="layer-count" id="count-potholes">—</span>
+        </label>
+        <label class="layer-toggle">
+          <input type="checkbox" id="layer-other" />
+          <span class="layer-color" style="background: #888"></span>
+          <span class="layer-name">Otros hazards</span>
+          <span class="layer-count" id="count-other">—</span>
+        </label>
+      </div>
+
+      <div class="panel-section">
+        <div class="panel-eyebrow">Filtros · Muertes</div>
+        <label class="filter-row">
+          <span>Año</span>
+          <select id="filter-year">
+            <option value="">Todos</option>
+            <option value="2026">2026</option>
+            <option value="2025" selected>2025</option>
+            <option value="2024">2024</option>
+            <option value="2023">2023</option>
+            <option value="2022">2022</option>
+            <option value="2021">2021</option>
+          </select>
+        </label>
+        <label class="filter-row">
+          <span>Vehículo</span>
+          <select id="filter-vehicle">
+            <option value="">Todos</option>
+            <option value="motocicleta" selected>Motocicleta</option>
+            <option value="automovil">Automóvil</option>
+            <option value="vehiculo_pesado">Vehículo pesado</option>
+            <option value="peaton">Peatón</option>
+            <option value="bicicleta">Bicicleta</option>
+          </select>
+        </label>
+        <label class="filter-row">
+          <span>Provincia</span>
+          <select id="filter-province">
+            <option value="">Todas</option>
+            <option>Distrito Nacional</option>
+            <option>Santo Domingo</option>
+            <option>Santiago</option>
+            <option>La Vega</option>
+            <option>Puerto Plata</option>
+            <option>San Cristóbal</option>
+            <option>La Romana</option>
+            <option>San Pedro de Macorís</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="panel-section panel-stats">
+        <div class="panel-eyebrow">Resumen visible</div>
+        <div class="mini-stat">
+          <span class="mini-stat__num" id="stat-visible-deaths">—</span>
+          <span class="mini-stat__label">muertes en vista</span>
+        </div>
+        <div class="mini-stat">
+          <span class="mini-stat__num" id="stat-visible-hazards">—</span>
+          <span class="mini-stat__label">hazards reportados</span>
+        </div>
+      </div>
+
+      <div class="panel-section panel-cta">
+        <button class="btn btn--primary btn--block" id="btn-report-here">
+          + Reportar en esta zona
+        </button>
+        <p class="panel-help">Click en el mapa para fijar ubicación</p>
+      </div>
+
+    </aside>
+
+    <!-- Mapa principal -->
+    <div id="map" class="map-canvas"></div>
+
+    <!-- Banner inferior con score de ruta (oculto por defecto) -->
+    <div class="route-banner" id="routeBanner" hidden>
+      <div class="route-banner__inner">
+        <div class="route-stat">
+          <div class="route-stat__num" id="routeScore">—</div>
+          <div class="route-stat__label">score de riesgo</div>
+        </div>
+        <div class="route-details" id="routeDetails">
+          Pasa por <strong>0</strong> policías acostados, <strong>0</strong> baches, <strong>0</strong> cruces peligrosos.
+        </div>
+        <button class="btn btn--ghost btn--sm" id="closeRoute">Cerrar</button>
+      </div>
+    </div>
+
+    <!-- Toast de notificaciones -->
+    <div class="toast" id="toast" hidden></div>
+
+  </main>
+
+  <script type="module" src="js/map.js"></script>
+</body>
+</html>
