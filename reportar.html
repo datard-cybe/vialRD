@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="es-DO">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0a0a0a" />
+  <title>Reportar hazard — VialRD</title>
+  <meta name="description" content="Reporta baches, policías acostados sin señalizar y otros peligros viales en RD." />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,800;9..144,900&family=IBM+Plex+Mono:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <link href="https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/report.css" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23E63946'/%3E%3Ctext x='50' y='68' font-family='serif' font-size='60' font-weight='900' text-anchor='middle' fill='white'%3EV%3C/text%3E%3C/svg%3E" />
+
+  <script>
+    window.__ENV = {
+      SUPABASE_URL: 'https://bmazvbpclpeprgdiijhw.supabase.co',
+      SUPABASE_ANON_KEY: 'sb_publishable_cyBfZu00XW6-qe6V_IbtnQ_5QTJOHjQ'
+    };
+  </script>
+</head>
+<body>
+
+  <header class="topbar">
+    <a href="/" class="brand">
+      <span class="brand__mark">▮</span>
+      <span class="brand__name">VialRD</span>
+    </a>
+    <nav class="topnav">
+      <a href="/">Inicio</a>
+      <a href="/app.html">Mapa</a>
+      <a href="/stats.html">Estadísticas</a>
+      <a href="/api-docs.html">API</a>
+    </nav>
+    <a href="/app.html" class="btn btn--ghost btn--sm">← Volver al mapa</a>
+  </header>
+
+  <main class="report-shell">
+    <div class="report-grid">
+
+      <!-- Columna izquierda: información -->
+      <aside class="report-intro">
+        <div class="eyebrow eyebrow--dark">Reporte ciudadano</div>
+        <h1 class="report-title">
+          Tu reporte <em>salva vidas.</em>
+        </h1>
+        <p class="report-lead">
+          Cada bache reportado, cada policía acostado sin señalizar marcado,
+          cada cruce peligroso documentado, es información que sirve al
+          ayuntamiento, al INTRANT y a los próximos conductores.
+        </p>
+
+        <div class="report-meta">
+          <div class="report-meta__item">
+            <span class="report-meta__num">1,945</span>
+            <span class="report-meta__label">muertes viales 2025</span>
+          </div>
+          <div class="report-meta__item">
+            <span class="report-meta__num">65%</span>
+            <span class="report-meta__label">son motoristas</span>
+          </div>
+        </div>
+
+        <p class="report-tip">
+          <strong>Anónimo o con cuenta.</strong> No pedimos identidad para reportar.
+          Pero si te registras, acumulas puntos por cada reporte verificado.
+        </p>
+      </aside>
+
+      <!-- Columna derecha: formulario -->
+      <section class="report-form-wrap">
+        <form id="reportForm" class="report-form">
+
+          <!-- Tipo de hazard -->
+          <fieldset class="form-section">
+            <legend>Tipo de hazard</legend>
+            <div class="hazard-grid">
+              <label class="hazard-option">
+                <input type="radio" name="type" value="bache" required />
+                <span class="hazard-option__inner">
+                  <span class="hazard-option__icon">⬣</span>
+                  <span class="hazard-option__name">Bache</span>
+                </span>
+              </label>
+              <label class="hazard-option">
+                <input type="radio" name="type" value="policia_acostado_no_senalizado" />
+                <span class="hazard-option__inner">
+                  <span class="hazard-option__icon">▆</span>
+                  <span class="hazard-option__name">Policía acostado</span>
+                  <span class="hazard-option__hint">sin señalizar</span>
+                </span>
+              </label>
+              <label class="hazard-option">
+                <input type="radio" name="type" value="cruce_peligroso" />
+                <span class="hazard-option__inner">
+                  <span class="hazard-option__icon">✕</span>
+                  <span class="hazard-option__name">Cruce peligroso</span>
+                </span>
+              </label>
+              <label class="hazard-option">
+                <input type="radio" name="type" value="zona_oscura" />
+                <span class="hazard-option__inner">
+                  <span class="hazard-option__icon">◗</span>
+                  <span class="hazard-option__name">Zona oscura</span>
+                  <span class="hazard-option__hint">sin alumbrado</span>
+                </span>
+              </label>
+              <label class="hazard-option">
+                <input type="radio" name="type" value="semaforo_danado" />
+                <span class="hazard-option__inner">
+                  <span class="hazard-option__icon">◉</span>
+                  <span class="hazard-option__name">Semáforo dañado</span>
+                </span>
+              </label>
+              <label class="hazard-option">
+                <input type="radio" name="type" value="senal_caida" />
+                <span class="hazard-option__inner">
+                  <span class="hazard-option__icon">⌒</span>
+                  <span class="hazard-option__name">Señal caída</span>
+                </span>
+              </label>
+              <label class="hazard-option">
+                <input type="radio" name="type" value="paso_peatonal_borrado" />
+                <span class="hazard-option__inner">
+                  <span class="hazard-option__icon">≡</span>
+                  <span class="hazard-option__name">Paso peatonal borrado</span>
+                </span>
+              </label>
+              <label class="hazard-option">
+                <input type="radio" name="type" value="otro" />
+                <span class="hazard-option__inner">
+                  <span class="hazard-option__icon">?</span>
+                  <span class="hazard-option__name">Otro</span>
+                </span>
+              </label>
+            </div>
+          </fieldset>
+
+          <!-- Ubicación -->
+          <fieldset class="form-section">
+            <legend>Ubicación</legend>
+            <div class="location-row">
+              <button type="button" class="btn btn--ghost btn--sm" id="useMyLocation">
+                📍 Usar mi ubicación
+              </button>
+              <span class="location-or">o</span>
+              <button type="button" class="btn btn--ghost btn--sm" id="pickOnMap">
+                🗺️ Marcar en mapa
+              </button>
+            </div>
+            <div class="location-coords" id="locationCoords" style="display:none">
+              <strong>Ubicación fijada:</strong>
+              <span id="coordsDisplay">—</span>
+              <button type="button" class="link-btn" id="clearLocation">cambiar</button>
+            </div>
+            <div class="mini-map" id="miniMap" style="display:none"></div>
+          </fieldset>
+
+          <!-- Severidad -->
+          <fieldset class="form-section">
+            <legend>Severidad <span class="severity-current" id="severityCurrent">3 — Moderada</span></legend>
+            <div class="severity-stars" role="radiogroup" aria-label="Severidad">
+              <button type="button" class="star-btn" data-sev="1" aria-label="1 estrella">★</button>
+              <button type="button" class="star-btn" data-sev="2" aria-label="2 estrellas">★</button>
+              <button type="button" class="star-btn active" data-sev="3" aria-label="3 estrellas">★</button>
+              <button type="button" class="star-btn" data-sev="4" aria-label="4 estrellas">★</button>
+              <button type="button" class="star-btn" data-sev="5" aria-label="5 estrellas">★</button>
+            </div>
+            <input type="hidden" name="severity" value="3" id="severityInput" />
+          </fieldset>
+
+          <!-- Descripción -->
+          <fieldset class="form-section">
+            <legend>Descripción <span class="optional">(opcional)</span></legend>
+            <textarea name="description" id="description" rows="3"
+              placeholder="Describe el problema con palabras. Ej: 'Tres baches grandes seguidos en el carril derecho, peligroso para motoristas'"
+              maxlength="500"></textarea>
+            <div class="char-count"><span id="charCount">0</span> / 500</div>
+          </fieldset>
+
+          <!-- Foto -->
+          <fieldset class="form-section">
+            <legend>Foto <span class="optional">(opcional, hasta 5MB)</span></legend>
+            <label for="photoInput" class="photo-drop" id="photoDrop">
+              <span class="photo-drop__icon">📷</span>
+              <span class="photo-drop__text">Toca o arrastra una foto aquí</span>
+              <input type="file" id="photoInput" accept="image/*" capture="environment" hidden />
+            </label>
+            <div class="photo-preview" id="photoPreview" style="display:none">
+              <img id="photoPreviewImg" alt="Vista previa" />
+              <button type="button" class="link-btn" id="photoRemove">quitar foto</button>
+            </div>
+          </fieldset>
+
+          <!-- Submit -->
+          <div class="form-actions">
+            <button type="submit" class="btn btn--primary btn--lg" id="submitBtn">
+              Enviar reporte
+            </button>
+            <p class="form-disclaimer">
+              Al enviar aceptas que tu reporte sea visible públicamente.
+              No guardamos información personal sobre ti.
+            </p>
+          </div>
+
+        </form>
+
+        <!-- Mensaje de éxito -->
+        <div class="report-success" id="reportSuccess" style="display:none">
+          <div class="report-success__icon">✓</div>
+          <h2>Reporte enviado</h2>
+          <p>Gracias. Tu reporte ya está en el mapa, ayudando a otros conductores a evitar este punto.</p>
+          <div class="report-success__actions">
+            <a href="/app.html" class="btn btn--primary">Ver en el mapa</a>
+            <button type="button" class="btn btn--ghost" id="reportAnother">Reportar otro</button>
+          </div>
+        </div>
+
+      </section>
+    </div>
+  </main>
+
+  <script type="module" src="js/reports.js"></script>
+</body>
+</html>

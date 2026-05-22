@@ -4,21 +4,28 @@
 // ===========================================================
 
 // Datos mock para demo cuando Supabase está vacío.
-// Distribuidos en zonas reales de alta mortalidad vial RD.
+// Coordenadas REALES en zonas de alta mortalidad vial (todas en tierra firme).
 const MOCK_DEATHS = [
-  // Distrito Nacional / Santo Domingo (alta densidad)
+  // Distrito Nacional — Av. 27 de Febrero, Independencia, Kennedy, Máximo Gómez, Tiradentes
   { lng: -69.9312, lat: 18.4861, fatalities: 1, vehicle: 'motocicleta', year: 2025, province: 'Distrito Nacional' },
-  { lng: -69.9404, lat: 18.4730, fatalities: 1, vehicle: 'motocicleta', year: 2025, province: 'Distrito Nacional' },
-  { lng: -69.9089, lat: 18.4955, fatalities: 1, vehicle: 'motocicleta', year: 2024, province: 'Distrito Nacional' },
-  { lng: -69.8745, lat: 18.4880, fatalities: 2, vehicle: 'motocicleta', year: 2025, province: 'Santo Domingo' },
-  { lng: -69.8567, lat: 18.5022, fatalities: 1, vehicle: 'motocicleta', year: 2025, province: 'Santo Domingo' },
-  { lng: -69.8910, lat: 18.4659, fatalities: 1, vehicle: 'automovil', year: 2025, province: 'Distrito Nacional' },
-  { lng: -69.9215, lat: 18.4587, fatalities: 1, vehicle: 'motocicleta', year: 2024, province: 'Distrito Nacional' },
+  { lng: -69.9404, lat: 18.4825, fatalities: 1, vehicle: 'motocicleta', year: 2025, province: 'Distrito Nacional' },
+  { lng: -69.9189, lat: 18.4912, fatalities: 1, vehicle: 'motocicleta', year: 2024, province: 'Distrito Nacional' },
+  { lng: -69.9215, lat: 18.4789, fatalities: 1, vehicle: 'motocicleta', year: 2024, province: 'Distrito Nacional' },
   { lng: -69.9533, lat: 18.4923, fatalities: 1, vehicle: 'motocicleta', year: 2025, province: 'Distrito Nacional' },
   { lng: -69.9176, lat: 18.5108, fatalities: 1, vehicle: 'peaton', year: 2025, province: 'Distrito Nacional' },
-  { lng: -69.8421, lat: 18.4756, fatalities: 1, vehicle: 'motocicleta', year: 2025, province: 'Santo Domingo' },
-  { lng: -69.8002, lat: 18.4612, fatalities: 1, vehicle: 'motocicleta', year: 2024, province: 'Santo Domingo' },
-  { lng: -69.7841, lat: 18.5034, fatalities: 1, vehicle: 'motocicleta', year: 2025, province: 'Santo Domingo' },
+  { lng: -69.9001, lat: 18.4945, fatalities: 1, vehicle: 'automovil', year: 2025, province: 'Distrito Nacional' },
+  { lng: -69.9456, lat: 18.4712, fatalities: 1, vehicle: 'motocicleta', year: 2025, province: 'Distrito Nacional' },
+  // Santo Domingo Este — Autopista Las Américas, Av. España, San Vicente
+  { lng: -69.8745, lat: 18.4920, fatalities: 2, vehicle: 'motocicleta', year: 2025, province: 'Santo Domingo' },
+  { lng: -69.8567, lat: 18.5022, fatalities: 1, vehicle: 'motocicleta', year: 2025, province: 'Santo Domingo' },
+  { lng: -69.8421, lat: 18.4985, fatalities: 1, vehicle: 'motocicleta', year: 2025, province: 'Santo Domingo' },
+  { lng: -69.8123, lat: 18.5189, fatalities: 1, vehicle: 'motocicleta', year: 2025, province: 'Santo Domingo' },
+  { lng: -69.7890, lat: 18.5212, fatalities: 1, vehicle: 'motocicleta', year: 2025, province: 'Santo Domingo' },
+  { lng: -69.7641, lat: 18.5134, fatalities: 1, vehicle: 'motocicleta', year: 2025, province: 'Santo Domingo' },
+  // Santo Domingo Norte — Av. Charles de Gaulle, Hainamosa
+  { lng: -69.8923, lat: 18.5534, fatalities: 1, vehicle: 'motocicleta', year: 2025, province: 'Santo Domingo' },
+  { lng: -69.9089, lat: 18.5489, fatalities: 1, vehicle: 'motocicleta', year: 2024, province: 'Santo Domingo' },
+  { lng: -69.8623, lat: 18.5612, fatalities: 1, vehicle: 'motocicleta', year: 2025, province: 'Santo Domingo' },
   // Santiago
   { lng: -70.6970, lat: 19.4517, fatalities: 1, vehicle: 'motocicleta', year: 2025, province: 'Santiago' },
   { lng: -70.7124, lat: 19.4612, fatalities: 1, vehicle: 'motocicleta', year: 2024, province: 'Santiago' },
@@ -40,42 +47,36 @@ const MOCK_DEATHS = [
   // San Pedro
   { lng: -69.3066, lat: 18.4539, fatalities: 1, vehicle: 'motocicleta', year: 2025, province: 'San Pedro de Macorís' },
   { lng: -69.3145, lat: 18.4602, fatalities: 1, vehicle: 'motocicleta', year: 2024, province: 'San Pedro de Macorís' },
-  // Higuey
+  // Higüey
   { lng: -68.7058, lat: 18.6155, fatalities: 1, vehicle: 'motocicleta', year: 2025, province: 'La Altagracia' },
-  // Bani
+  // Baní
   { lng: -70.3320, lat: 18.2810, fatalities: 1, vehicle: 'motocicleta', year: 2025, province: 'Peravia' },
   // Azua
   { lng: -70.7350, lat: 18.4534, fatalities: 1, vehicle: 'motocicleta', year: 2024, province: 'Azua' },
   // Barahona
   { lng: -71.1000, lat: 18.2117, fatalities: 1, vehicle: 'motocicleta', year: 2025, province: 'Barahona' },
-  // Más motocicletas en SDN/SDE para mostrar el patrón
-  { lng: -69.8923, lat: 18.5234, fatalities: 1, vehicle: 'motocicleta', year: 2025, province: 'Santo Domingo' },
-  { lng: -69.9001, lat: 18.4445, fatalities: 1, vehicle: 'motocicleta', year: 2025, province: 'Distrito Nacional' },
-  { lng: -69.8456, lat: 18.4922, fatalities: 1, vehicle: 'motocicleta', year: 2025, province: 'Santo Domingo' },
-  { lng: -69.8123, lat: 18.5189, fatalities: 1, vehicle: 'motocicleta', year: 2025, province: 'Santo Domingo' },
-  { lng: -69.7890, lat: 18.4912, fatalities: 1, vehicle: 'motocicleta', year: 2025, province: 'Santo Domingo' },
 ];
 
 const MOCK_HAZARDS = [
-  // Policías acostados (sin señalizar)
+  // Policías acostados sin señalizar — todos en avenidas/calles reales en tierra firme
   { lng: -69.9320, lat: 18.4865, type: 'policia_acostado_no_senalizado', desc: 'Policía acostado sin pintar, casi invisible de noche', severity: 4 },
-  { lng: -69.9105, lat: 18.4612, type: 'policia_acostado_no_senalizado', desc: 'Tres reductores seguidos sin advertencia previa', severity: 5 },
+  { lng: -69.9105, lat: 18.4912, type: 'policia_acostado_no_senalizado', desc: 'Tres reductores seguidos sin advertencia previa', severity: 5 },
   { lng: -69.8745, lat: 18.4880, type: 'policia_acostado_no_senalizado', desc: 'Muy alto, daña suspensión', severity: 4 },
   { lng: -69.9510, lat: 18.4910, type: 'policia_acostado_no_senalizado', desc: 'Sin señalización ni pintura', severity: 3 },
   { lng: -70.6920, lat: 19.4520, type: 'policia_acostado_no_senalizado', desc: 'Cerca de escuela pero sin marcar', severity: 4 },
   { lng: -69.8590, lat: 18.5040, type: 'policia_acostado_no_senalizado', desc: 'En curva, peligroso de noche', severity: 5 },
-  { lng: -69.9220, lat: 18.4530, type: 'policia_acostado_no_senalizado', desc: 'Improvisado con concreto', severity: 4 },
+  { lng: -69.9220, lat: 18.4830, type: 'policia_acostado_no_senalizado', desc: 'Improvisado con concreto', severity: 4 },
   // Baches
-  { lng: -69.9180, lat: 18.4720, type: 'bache', desc: 'Hueco profundo en carril derecho', severity: 4 },
+  { lng: -69.9180, lat: 18.4820, type: 'bache', desc: 'Hueco profundo en carril derecho', severity: 4 },
   { lng: -69.9402, lat: 18.4855, type: 'bache', desc: 'Bache grande, se ha tragado motoristas', severity: 5 },
   { lng: -69.8950, lat: 18.4956, type: 'bache', desc: 'Múltiples baches en cadena', severity: 3 },
   { lng: -70.7050, lat: 19.4580, type: 'bache', desc: 'Hueco que retiene agua, no se ve', severity: 4 },
-  { lng: -69.8470, lat: 18.4810, type: 'bache', desc: 'Bache sobre tapa de alcantarilla', severity: 4 },
-  { lng: -69.9085, lat: 18.4456, type: 'bache', desc: 'En avenida principal, sin reparar 6 meses', severity: 3 },
+  { lng: -69.8470, lat: 18.4910, type: 'bache', desc: 'Bache sobre tapa de alcantarilla', severity: 4 },
+  { lng: -69.9085, lat: 18.4756, type: 'bache', desc: 'En avenida principal, sin reparar 6 meses', severity: 3 },
   // Otros
   { lng: -69.9012, lat: 18.4789, type: 'cruce_peligroso', desc: 'Cruce sin semáforo, alta mortalidad', severity: 5 },
   { lng: -69.8801, lat: 18.4912, type: 'semaforo_danado', desc: 'Solo parpadea amarillo desde hace semanas', severity: 3 },
-  { lng: -69.9421, lat: 18.4612, type: 'zona_oscura', desc: 'Sin alumbrado en 200m', severity: 4 },
+  { lng: -69.9421, lat: 18.4823, type: 'zona_oscura', desc: 'Sin alumbrado en 200m', severity: 4 },
 ];
 
 // ============ Estado global ============
