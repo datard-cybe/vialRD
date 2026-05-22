@@ -89,6 +89,18 @@
   font-variant-numeric: tabular-nums;
 }
 
+.panel-note {
+  margin-top: 14px;
+  padding: 10px 12px;
+  background: rgba(244, 196, 48, 0.08);
+  border-left: 2px solid var(--c-yellow);
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: var(--c-ink-mute);
+}
+.panel-note strong { color: var(--c-bg); font-weight: 600; }
+.panel-note em { color: var(--c-yellow); font-style: normal; }
+
 /* Filtros */
 .filter-row {
   display: flex;

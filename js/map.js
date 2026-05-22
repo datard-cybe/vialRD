@@ -459,13 +459,20 @@ function setupPopups(map) {
   map.on('click', 'provinces-circles', (e) => {
     const f = e.features[0];
     const p = f.properties;
-    new maplibregl.Popup({ closeButton: true, maxWidth: '300px' })
+    const yearTxt = state.filters.year ? `año ${state.filters.year}` : '2016-2026 (acumulado)';
+    new maplibregl.Popup({ closeButton: true, maxWidth: '320px' })
       .setLngLat(e.lngLat)
       .setHTML(`
-        <div class="popup-title">${p.province}</div>
-        <div class="popup-meta">Fuente: DIGESETT · datos.gob.do</div>
+        <div class="popup-title">Provincia: ${p.province}</div>
+        <div class="popup-meta">${yearTxt}</div>
         <div class="popup-stat">${Number(p.fatalities).toLocaleString('es-DO')} fallecidos</div>
-        <div class="popup-desc">${p.years_count ? `Datos acumulados de ${p.years_count} años` : 'Datos del año seleccionado'}</div>
+        <div class="popup-desc" style="margin-top:6px">
+          Total de muertes viales en <strong>toda la provincia</strong>,
+          no en este punto específico. El círculo está ubicado en el centro geográfico.
+        </div>
+        <div class="popup-desc" style="margin-top:8px; font-size:0.75rem; opacity:0.65; border-top:1px solid #333; padding-top:6px">
+          Fuente: DIGESETT / Opsevi · datos.gob.do
+        </div>
       `)
       .addTo(map);
   });
