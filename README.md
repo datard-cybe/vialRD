@@ -1,190 +1,80 @@
-# VialRD
+# VialRD — Día 3b: Filtros reactivos + Métricas dinámicas
 
-> Plataforma cívica de datos viales abiertos para República Dominicana.
-> **Misión:** reducir la mortalidad vial dominicana — particularmente la motorizada (65% de las muertes) — mediante datos abiertos, crowdsourcing ciudadano y ruteo consciente del riesgo.
+## Qué arregla este patch
 
-[![Status](https://img.shields.io/badge/status-MVP-orange)]()
-[![License](https://img.shields.io/badge/license-AGPL--3.0-blue)]()
-[![Stack](https://img.shields.io/badge/stack-Supabase%20%2B%20Cloudflare%20Pages-green)]()
+**3 bugs críticos resueltos:**
 
----
+1. ✅ El **filtro de año** ya cambia los círculos de provincia (antes no hacía nada)
+2. ✅ El **filtro de provincia** ahora hace zoom y filtra todo (antes solo afectaba pines individuales)
+3. ✅ El **filtro de vehículo** ahora cambia el número visualizado (motoristas vs todos)
 
-## El problema
+**Mejoras nuevas:**
 
-En 2025 murieron **1,945 motociclistas** en República Dominicana — el **65% de todas las muertes viales del país**. Solo el **0.3% de los 3.5 millones de motoristas** tiene licencia activa. El 36% de las víctimas son jóvenes entre 18-29 años.
+- 🎯 **3 mini-stats reactivas** nuevas en el sidebar:
+  - Provincia más letal (con su número)
+  - % de motoristas sobre el total
+  - Hazards reportados
+- 🎨 **Contexto del filtro activo** en banner amarillo arriba de las stats
+- ✨ **Contadores animados** al cambiar filtros (no parpadean, transicionan)
+- 🔄 **Botón "Limpiar"** para resetear todos los filtros de una
+- 💫 **Flash visual** del panel al cambiar un filtro (feedback inmediato)
+- 🎬 **Transición suave** de los círculos del mapa al cambiar año/vehículo (400ms)
+- 🛰️ **Auto-zoom** a la provincia cuando la seleccionas en el filtro
 
-Mientras tanto, las apps comerciales (Waze, Google Maps) optimizan por velocidad, no por riesgo. No mapean policías acostados sin señalizar. No cruzan datos oficiales del Opsevi/DIGESETT con reportes ciudadanos. No publican APIs abiertas para periodistas, ONGs ni gobierno.
+## Archivos a reemplazar/actualizar
 
-**VialRD llena ese vacío.**
+| Archivo | Acción |
+|---------|--------|
+| `js/map.js` | **Reemplazar** completo |
+| `app.html` | **Reemplazar** completo |
+| `css/map.css` | **Añadir** el contenido de `css/map-patch.css` AL FINAL (no reemplazar) |
 
-## Características v1.0
+## Pasos de deploy (3 min)
 
-- 🗺️ **Mapa interactivo** con 3 capas:
-  - Calor de muertes 2021-2026 (datos DIGESETT/Opsevi)
-  - Policías acostados sin señalizar (crowdsourcing)
-  - Baches y otros hazards (crowdsourcing)
-- 🛣️ **Ruteo consciente del riesgo** — no la ruta más rápida, la más segura
-- 📝 **Reportes ciudadanos** anónimos o autenticados, con foto y geolocalización
-- 📊 **Dashboard público** de estadísticas en tiempo real
-- 🔌 **API pública gratuita** para periodistas, ONGs y gobierno
-- 📱 **PWA instalable** — funciona como app nativa
-- 🇩🇴 100% en español dominicano
-
-## Stack
-
-| Capa | Tecnología |
-|------|-----------|
-| Frontend | Vanilla JS + MapLibre GL JS + Tailwind |
-| Hosting | Cloudflare Pages |
-| Backend / DB | Supabase (PostgreSQL + PostGIS) |
-| Auth | Supabase Auth (Google OAuth) |
-| Storage | Supabase Storage |
-| Mapas | OpenStreetMap (raster tiles) |
-| Routing | OpenRouteService API |
-| Geocoding | Nominatim |
-| Anti-spam | hCaptcha |
-| ETL datos oficiales | Python + GitHub Actions (semanal) |
-
-## Setup local
-
-### Requisitos
-- Cuenta en [Supabase](https://supabase.com) (free tier)
-- Cuenta en [OpenRouteService](https://openrouteservice.org/dev/) (API key gratis)
-- Cuenta en [hCaptcha](https://www.hcaptcha.com/) (sitekey gratis)
-- Node.js 20+ (solo para herramientas de dev opcionales)
-
-### Pasos
-
-1. **Clonar repo**
-   ```bash
-   git clone https://github.com/datard-cybe/vialrd.git
-   cd vialrd
-   ```
-
-2. **Configurar variables de entorno**
-   ```bash
-   cp .env.example .env
-   # Editar .env con tus credenciales
-   ```
-
-3. **Crear schema en Supabase**
-   - Login en supabase.com → tu proyecto → SQL Editor
-   - Pegar y ejecutar `sql/01_schema.sql`
-   - Pegar y ejecutar `sql/02_rls_policies.sql`
-   - Pegar y ejecutar `sql/03_functions.sql`
-
-4. **Levantar localmente**
-   ```bash
-   # Cualquier servidor estático funciona, ejemplos:
-   python3 -m http.server 8000
-   # o
-   npx serve .
-   ```
-
-5. **Importar datos oficiales** (opcional para desarrollo)
-   ```bash
-   cd scripts
-   pip install -r requirements.txt
-   python import_digesett.py
-   ```
-
-## Despliegue
-
-### Cloudflare Pages
 ```bash
-# Push a main → autodeployment
-git push origin main
+# 1. Copiar archivos sobre tu carpeta local
+cd C:\Users\User\OneDrive\Escritorio\vialrd
+
+# 2. Reemplazar js/map.js y app.html (copiar desde el zip descomprimido)
+
+# 3. Agregar el CSS patch al final de css/map.css
+#    (Opción A — manual: abre map.css y pega el contenido de map-patch.css al final)
+#    (Opción B — terminal):
+type css\map-patch.css >> css\map.css
+
+# 4. Commit + push
+git add app.html js/map.js css/map.css
+git commit -m "feat: filtros reactivos + mini-stats dinamicas"
+git push
 ```
 
-Configurar en Cloudflare Pages:
-- Build command: (vacío — es estático)
-- Build output directory: `/`
-- Environment variables: copiar de `.env.example` con valores reales
+Cloudflare redeploya en 60 seg.
 
-## Estructura del repo
+## Cómo probarlo
 
-```
-vialrd/
-├── index.html              # Landing + app principal
-├── app.html                # Vista del mapa principal
-├── reportar.html           # Formulario de reporte
-├── stats.html              # Dashboard público
-├── api-docs.html           # Documentación de la API pública
-├── css/
-│   ├── style.css           # Estilos principales
-│   └── map.css             # Estilos específicos del mapa
-├── js/
-│   ├── app.js              # Bootstrap de la app
-│   ├── map.js              # Lógica del mapa MapLibre
-│   ├── routing.js          # Cálculo de rutas + riesgo
-│   ├── reports.js          # CRUD de reportes
-│   ├── auth.js             # Supabase Auth
-│   └── api.js              # Cliente Supabase
-├── sql/
-│   ├── 01_schema.sql       # Tablas + índices
-│   ├── 02_rls_policies.sql # Row Level Security
-│   └── 03_functions.sql    # Funciones PostGIS (risk score, etc)
-├── scripts/
-│   ├── import_digesett.py  # ETL de DIGESETT
-│   ├── import_opsevi.py    # ETL de Opsevi/INTRANT
-│   └── requirements.txt
-├── public/
-│   ├── manifest.json       # PWA manifest
-│   ├── sw.js               # Service worker
-│   └── icons/              # Iconos PWA
-└── .github/
-    └── workflows/
-        └── etl-weekly.yml  # Cron semanal para ETL
-```
+Abre vialrd.com/app con Ctrl+Shift+R, y:
 
-## API pública
+1. Cambia el filtro de **año** a 2023 → los círculos se achican (menos muertes en ese año)
+2. Cambia **vehículo** a "Automóvil" → los números bajan (~35% del total)
+3. Cambia **provincia** a "Santiago" → solo queda 1 círculo, el mapa hace zoom
+4. Click "Limpiar" → vuelve todo al estado inicial con animación
+5. Click en un círculo → popup muestra desglose: total, motoristas, % motoristas
 
-Base: `https://vialrd.com/api/v1`
+## Cómo funciona técnicamente (para el pitch al jurado)
 
-| Endpoint | Método | Descripción |
-|----------|--------|-------------|
-| `/reports` | GET | Listar reportes con filtros geo |
-| `/reports/:id` | GET | Detalle de un reporte |
-| `/accidents` | GET | Accidentes oficiales con filtros |
-| `/accidents/heatmap` | GET | Datos agregados para mapa de calor |
-| `/route/risk` | POST | Calcular score de riesgo de una ruta |
-| `/stats/national` | GET | Estadísticas nacionales actualizadas |
-| `/stats/province/:name` | GET | Estadísticas por provincia |
+**Antes (broken):**
+- 1 query a Supabase con `year_filter: null` → datos agregados sin desglose
+- Filtros en cliente no funcionaban porque no había desglose por año
 
-Toda la API es **gratis y sin autenticación** para uso no comercial. Rate limit: 100 req/min.
+**Después (reactivo):**
+- 1 query SELECT a `province_yearly_stats` → trae las ~242 filas year×province
+- Toda la lógica de filtrado en cliente (sub-milisegundo)
+- Re-agregación dinámica al cambiar cualquier filtro
+- MapLibre GL JS aplica transiciones automáticas de 400ms cuando cambia la data
 
-## Roadmap
+**Por qué esto importa al jurado:**
 
-### v1.0 (lanzamiento — mayo 2026)
-- [x] Schema + RLS
-- [x] Mapa con capas básicas
-- [ ] Formulario de reporte
-- [ ] Ruteo con score de riesgo
-- [ ] Dashboard público
-- [ ] API pública v1
-
-### v2.0 (Q3 2026)
-- [ ] Algoritmo de detección de "puntos negros" automatizado
-- [ ] Notificaciones push de hazards cercanos
-- [ ] App nativa (Android primero)
-- [ ] Modo offline parcial
-- [ ] Integración con WhatsApp para reportes por chat
-
-### v3.0 (Q4 2026)
-- [ ] Detección automática de baches con ML
-- [ ] Dashboard institucional para INTRANT/MOPC
-- [ ] Open311 compliance para integración con ayuntamientos
-
-## Licencia
-
-Código bajo **AGPL-3.0**. Los datos publicados están bajo **CC BY 4.0** — libres para uso periodístico, académico, gubernamental y comercial con atribución.
-
-## Contacto
-
-- Sitio: [vialrd.com](https://vialrd.com)
-- Email: contacto@vialrd.com
-- GitHub Issues: para bugs y feature requests
-
----
-
-**VialRD es un proyecto cívico independiente, sin fines de lucro, construido en República Dominicana.**
+> "VialRD permite al usuario explorar 30,136 fallecidos viales con 3 dimensiones de filtro
+> en tiempo real. Los datos se procesan en el cliente, sin queries adicionales al backend,
+> manteniendo la API pública con bajísimo costo operacional (Supabase free tier soporta
+> todo el tráfico)."
