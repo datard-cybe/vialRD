@@ -6,19 +6,14 @@
   <meta name="theme-color" content="#0a0a0a" />
   <title>Mapa — VialRD</title>
   <meta name="description" content="Mapa interactivo de muertes viales, baches y policías acostados de República Dominicana." />
-
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,800;9..144,900&family=IBM+Plex+Mono:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
-
-  <!-- MapLibre GL JS (open source, sin API key) -->
   <link href="https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
-
   <link rel="stylesheet" href="css/style.css" />
   <link rel="stylesheet" href="css/map.css" />
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23E63946'/%3E%3Ctext x='50' y='68' font-family='serif' font-size='60' font-weight='900' text-anchor='middle' fill='white'%3EV%3C/text%3E%3C/svg%3E" />
-
   <script>
     window.__ENV = {
       SUPABASE_URL: 'https://bmazvbpclpeprgdiijhw.supabase.co',
@@ -28,7 +23,7 @@
 </head>
 <body class="app-body">
 
-  <!-- Top bar minimal -->
+  <!-- Top bar -->
   <header class="topbar topbar--app">
     <a href="/" class="brand">
       <span class="brand__mark">▮</span>
@@ -45,11 +40,11 @@
 
   <!-- Layout del mapa -->
   <main class="map-shell">
-
-    <!-- Sidebar de capas + filtros -->
+    <!-- Sidebar -->
     <aside class="map-panel" id="mapPanel">
       <button class="panel-toggle" id="panelToggle" aria-label="Colapsar panel">‹</button>
 
+      <!-- Capas -->
       <div class="panel-section">
         <div class="panel-eyebrow">Capas activas</div>
         <label class="layer-toggle">
@@ -82,20 +77,24 @@
           <span class="layer-name">Otros hazards</span>
           <span class="layer-count" id="count-other">—</span>
         </label>
+
         <div class="panel-note">
           📍 <strong>Cómo leer el mapa:</strong> los círculos rojos representan el total
-          acumulado de muertes en <em>toda la provincia</em>, dibujados en el centro geográfico.
-          No son ubicaciones exactas de cada incidente. Los pines pequeños sí son ubicaciones
-          específicas reportadas por ciudadanos.
+          en <em>toda la provincia</em>, dibujados en el centro geográfico.
+          No son ubicaciones exactas de cada incidente.
         </div>
       </div>
 
+      <!-- Filtros -->
       <div class="panel-section">
-        <div class="panel-eyebrow">Filtros · Muertes</div>
+        <div class="panel-eyebrow">
+          Filtros · Muertes
+          <button class="filter-reset-btn" id="filter-reset" title="Limpiar todos los filtros">Limpiar</button>
+        </div>
         <label class="filter-row">
           <span>Año</span>
           <select id="filter-year">
-            <option value="">Todos</option>
+            <option value="">Todos (2016-2026)</option>
             <option value="2026">2026</option>
             <option value="2025" selected>2025</option>
             <option value="2024">2024</option>
@@ -127,35 +126,61 @@
             <option>San Cristóbal</option>
             <option>La Romana</option>
             <option>San Pedro de Macorís</option>
+            <option>La Altagracia</option>
+            <option>Duarte</option>
+            <option>Espaillat</option>
+            <option>Peravia</option>
+            <option>Azua</option>
+            <option>Barahona</option>
+            <option>San Juan</option>
           </select>
         </label>
       </div>
 
+      <!-- Stats reactivas -->
       <div class="panel-section panel-stats">
-        <div class="panel-eyebrow">Resumen visible</div>
-        <div class="mini-stat">
+        <div class="panel-eyebrow">Resumen reactivo</div>
+        <div class="filter-context" id="stat-filter-context">2025 · motoristas</div>
+
+        <!-- Mini-stat principal: total visible -->
+        <div class="mini-stat mini-stat--hero">
           <span class="mini-stat__num" id="stat-visible-deaths">—</span>
-          <span class="mini-stat__label">muertes en vista</span>
+          <span class="mini-stat__label">fallecidos en filtro actual</span>
         </div>
-        <div class="mini-stat">
-          <span class="mini-stat__num" id="stat-visible-hazards">—</span>
-          <span class="mini-stat__label">hazards reportados</span>
+
+        <!-- Grid 2x2 de mini-stats secundarias -->
+        <div class="mini-stat-grid">
+          <div class="mini-stat mini-stat--sm">
+            <span class="mini-stat__num" id="stat-top-province-value">—</span>
+            <span class="mini-stat__label">
+              en <strong id="stat-top-province">—</strong>
+              <em>(provincia más letal)</em>
+            </span>
+          </div>
+          <div class="mini-stat mini-stat--sm">
+            <span class="mini-stat__num" id="stat-moto-pct">—</span>
+            <span class="mini-stat__label">son motoristas</span>
+          </div>
+          <div class="mini-stat mini-stat--sm">
+            <span class="mini-stat__num" id="stat-visible-hazards">—</span>
+            <span class="mini-stat__label">hazards reportados</span>
+          </div>
         </div>
       </div>
 
+      <!-- CTA reporte -->
       <div class="panel-section panel-cta">
         <button class="btn btn--primary btn--block" id="btn-report-here">
           + Reportar en esta zona
         </button>
         <p class="panel-help">Click en el mapa para fijar ubicación</p>
       </div>
-
     </aside>
 
-    <!-- Mapa principal -->
+    <!-- Mapa -->
     <div id="map" class="map-canvas"></div>
 
-    <!-- Banner inferior con score de ruta (oculto por defecto) -->
+    <!-- Banner de ruta (futuro) -->
     <div class="route-banner" id="routeBanner" hidden>
       <div class="route-banner__inner">
         <div class="route-stat">
@@ -169,9 +194,8 @@
       </div>
     </div>
 
-    <!-- Toast de notificaciones -->
+    <!-- Toast -->
     <div class="toast" id="toast" hidden></div>
-
   </main>
 
   <script type="module" src="js/map.js"></script>

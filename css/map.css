@@ -314,3 +314,168 @@
   .route-banner__inner { flex-direction: column; align-items: stretch; gap: 12px; }
   .route-stat { border-right: none; border-bottom: 1px solid #2a2a2a; padding: 0 0 12px; }
 }
+/* ===================================================
+   VialRD — Patch para mini-stats reactivas (Day 3b)
+   AÑADIR AL FINAL DE css/map.css (no reemplazar)
+   =================================================== */
+
+/* Contexto del filtro activo */
+.filter-context {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #f4c430;
+  margin-bottom: 0.85rem;
+  padding: 0.4rem 0.6rem;
+  background: rgba(244, 196, 48, 0.08);
+  border-left: 2px solid #f4c430;
+}
+
+/* Hero mini-stat (número grande) */
+.mini-stat--hero {
+  display: flex !important;
+  flex-direction: column;
+  padding: 0.85rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  margin-bottom: 0.85rem;
+}
+
+.mini-stat--hero .mini-stat__num {
+  font-family: 'Fraunces', serif;
+  font-weight: 900;
+  font-size: 2.4rem;
+  line-height: 1;
+  color: #e63946;
+  letter-spacing: -0.02em;
+  transition: color 0.25s ease;
+}
+
+.mini-stat--hero .mini-stat__label {
+  font-size: 0.72rem;
+  color: #a5a39c;
+  margin-top: 0.35rem;
+  letter-spacing: 0.02em;
+}
+
+/* Grid de 3 mini-stats secundarias */
+.mini-stat-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.55rem;
+}
+
+.mini-stat--sm {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 0.55rem 0.65rem;
+  display: flex;
+  flex-direction: column;
+  border-radius: 2px;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.mini-stat--sm:hover {
+  background: rgba(244, 196, 48, 0.06);
+  border-color: rgba(244, 196, 48, 0.3);
+}
+
+.mini-stat--sm .mini-stat__num {
+  font-family: 'Fraunces', serif;
+  font-weight: 800;
+  font-size: 1.15rem;
+  line-height: 1.1;
+  color: #fff;
+}
+
+.mini-stat--sm .mini-stat__label {
+  font-size: 0.66rem;
+  color: #a5a39c;
+  margin-top: 0.25rem;
+  line-height: 1.3;
+}
+
+.mini-stat--sm .mini-stat__label strong {
+  color: #f4c430;
+  font-weight: 600;
+  display: block;
+}
+
+.mini-stat--sm .mini-stat__label em {
+  font-style: normal;
+  opacity: 0.55;
+  font-size: 0.6rem;
+  display: block;
+}
+
+/* Botón limpiar filtros */
+.filter-reset-btn {
+  float: right;
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #a5a39c;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.15rem 0.5rem;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: all 0.15s ease;
+}
+
+.filter-reset-btn:hover {
+  border-color: #e63946;
+  color: #e63946;
+  background: rgba(230, 57, 70, 0.08);
+}
+
+/* Flash visual al cambiar un filtro (feedback) */
+.map-panel.panel-updated {
+  animation: panelFlash 0.35s ease;
+}
+
+@keyframes panelFlash {
+  0%   { box-shadow: inset 4px 0 0 transparent; }
+  50%  { box-shadow: inset 4px 0 0 #f4c430; }
+  100% { box-shadow: inset 4px 0 0 transparent; }
+}
+
+/* Popup — filas info adicional (provincia/moto%) */
+.popup-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.3rem 0;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.08);
+  font-size: 0.82rem;
+}
+
+.popup-row:last-child {
+  border-bottom: none;
+}
+
+.popup-row__label {
+  color: #a5a39c;
+}
+
+.popup-row strong {
+  color: #fff;
+  font-weight: 600;
+}
+
+/* Ajuste responsive para mobile */
+@media (max-width: 768px) {
+  .mini-stat-grid {
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 0.35rem;
+  }
+  .mini-stat--sm {
+    padding: 0.45rem;
+  }
+  .mini-stat--sm .mini-stat__num {
+    font-size: 0.95rem;
+  }
+  .mini-stat--hero .mini-stat__num {
+    font-size: 1.9rem;
+  }
+}
