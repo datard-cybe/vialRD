@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="es-DO">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0a0a0a" />
+  <title>Estadísticas — VialRD</title>
+  <meta name="description" content="Dashboard con datos viales de República Dominicana 2016-2026. Muertes por provincia, año, mes, hora, género y edad. Datos oficiales DIGESETT/Opsevi." />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="Estadísticas viales · VialRD" />
+  <meta property="og:description" content="30,136 muertes viales 2016-2026. Aquí están los datos por provincia, año, mes, hora, género y edad." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://vialrd.com/stats.html" />
+
+  <!-- Fuentes -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,800;9..144,900&family=IBM+Plex+Mono:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Chart.js v4 -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/stats.css" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23E63946'/%3E%3Ctext x='50' y='68' font-family='serif' font-size='60' font-weight='900' text-anchor='middle' fill='white'%3EV%3C/text%3E%3C/svg%3E" />
+
+  <script>
+    window.__ENV = {
+      SUPABASE_URL: 'https://bmazvbpclpeprgdiijhw.supabase.co',
+      SUPABASE_ANON_KEY: 'sb_publishable_cyBfZu00XW6-qe6V_IbtnQ_5QTJOHjQ'
+    };
+  </script>
+</head>
+<body>
+
+  <!-- ════════════════════════════════════════════════════ -->
+  <!-- TOP BAR                                                -->
+  <!-- ════════════════════════════════════════════════════ -->
+  <header class="topbar">
+    <a href="/" class="brand">
+      <span class="brand__mark">▮</span>
+      <span class="brand__name">VialRD</span>
+    </a>
+    <nav class="topnav">
+      <a href="/">Inicio</a>
+      <a href="/app.html">Mapa</a>
+      <a href="/stats.html" class="active">Estadísticas</a>
+      <a href="/api-docs.html">API</a>
+    </nav>
+    <a href="/reportar.html" class="btn btn--primary btn--sm">+ Reportar</a>
+  </header>
+
+  <!-- ════════════════════════════════════════════════════ -->
+  <!-- HERO STATS — 4 números editoriales                    -->
+  <!-- ════════════════════════════════════════════════════ -->
+  <section class="stats-hero">
+    <div class="stats-hero__inner">
+      <div class="stats-hero__head">
+        <div class="eyebrow eyebrow--dark">El panorama 2016 — 2026</div>
+        <h1 class="stats-hero__title">
+          Once años de muertes viales en RD, <em>en una página.</em>
+        </h1>
+        <p class="prose">
+          Datos oficiales del Opsevi/DIGESETT cruzados por provincia, año, mes, hora, vehículo,
+          género y edad. Filtra por año para ver patrones específicos. Comparte los gráficos
+          libremente — licencia CC BY 4.0.
+        </p>
+      </div>
+
+      <div class="stats-headline-grid">
+        <div class="stats-headline">
+          <div class="stats-headline__num" id="headline-total">—</div>
+          <div class="stats-headline__label">muertes viales 2016–2026</div>
+        </div>
+        <div class="stats-headline">
+          <div class="stats-headline__num" id="headline-moto">—</div>
+          <div class="stats-headline__label">víctimas en motocicleta</div>
+        </div>
+        <div class="stats-headline">
+          <div class="stats-headline__num" id="headline-moto-pct">—</div>
+          <div class="stats-headline__label">% son motoristas</div>
+        </div>
+        <div class="stats-headline">
+          <div class="stats-headline__num" id="headline-daily">—</div>
+          <div class="stats-headline__label">muertes promedio por día</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════ -->
+  <!-- FILTRO ANUAL                                           -->
+  <!-- ════════════════════════════════════════════════════ -->
+  <section class="stats-filterbar">
+    <div class="stats-filterbar__inner">
+      <div class="stats-filter-label">
+        <span class="eyebrow eyebrow--dark">Filtrar por año</span>
+      </div>
+      <div class="stats-filter-pills" id="year-pills">
+        <button class="year-pill active" data-year="">Todos</button>
+        <button class="year-pill" data-year="2026">2026</button>
+        <button class="year-pill" data-year="2025">2025</button>
+        <button class="year-pill" data-year="2024">2024</button>
+        <button class="year-pill" data-year="2023">2023</button>
+        <button class="year-pill" data-year="2022">2022</button>
+        <button class="year-pill" data-year="2021">2021</button>
+        <button class="year-pill" data-year="2020">2020</button>
+        <button class="year-pill" data-year="2019">2019</button>
+        <button class="year-pill" data-year="2018">2018</button>
+        <button class="year-pill" data-year="2017">2017</button>
+        <button class="year-pill" data-year="2016">2016</button>
+      </div>
+      <div class="stats-filter-ctx" id="filter-context">Vista 2016–2026 (acumulado)</div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════ -->
+  <!-- CHARTS                                                 -->
+  <!-- ════════════════════════════════════════════════════ -->
+  <section class="charts-section">
+    <div class="charts-section__inner">
+
+      <!-- Chart 1: Temporal (línea) — ocupa fila completa -->
+      <article class="chart-card chart-card--wide">
+        <div class="chart-card__head">
+          <div class="eyebrow eyebrow--dark">Evolución temporal</div>
+          <h2 class="chart-card__title">
+            Muertes viales por año <em>(2016 — 2026)</em>
+          </h2>
+          <p class="chart-card__subtitle">
+            Línea total y desglose de motoristas. La pandemia 2020 marcó la única baja
+            sostenida del período.
+          </p>
+        </div>
+        <div class="chart-card__canvas-wrap chart-card__canvas-wrap--tall">
+          <canvas id="chart-temporal" aria-label="Gráfico de líneas: muertes por año 2016-2026"></canvas>
+        </div>
+      </article>
+
+      <!-- Grid 2 columnas para charts medianos -->
+      <div class="charts-grid">
+
+        <!-- Chart 2: Top provincias -->
+        <article class="chart-card">
+          <div class="chart-card__head">
+            <div class="eyebrow eyebrow--dark">Geografía</div>
+            <h2 class="chart-card__title">Top 10 provincias <em>más letales</em></h2>
+            <p class="chart-card__subtitle">Santo Domingo y Santiago concentran el 30%.</p>
+          </div>
+          <div class="chart-card__canvas-wrap">
+            <canvas id="chart-provinces" aria-label="Top 10 provincias por muertes"></canvas>
+          </div>
+        </article>
+
+        <!-- Chart 3: Estacionalidad -->
+        <article class="chart-card">
+          <div class="chart-card__head">
+            <div class="eyebrow eyebrow--dark">Estacionalidad</div>
+            <h2 class="chart-card__title">Muertes por <em>mes</em></h2>
+            <p class="chart-card__subtitle">Diciembre y Semana Santa son los picos.</p>
+          </div>
+          <div class="chart-card__canvas-wrap">
+            <canvas id="chart-month" aria-label="Muertes por mes"></canvas>
+          </div>
+        </article>
+
+        <!-- Chart 4: Día de la semana -->
+        <article class="chart-card">
+          <div class="chart-card__head">
+            <div class="eyebrow eyebrow--dark">Patrón semanal</div>
+            <h2 class="chart-card__title">Muertes por <em>día de la semana</em></h2>
+            <p class="chart-card__subtitle">El domingo concentra el 24.5%.</p>
+          </div>
+          <div class="chart-card__canvas-wrap">
+            <canvas id="chart-weekday" aria-label="Muertes por día de la semana"></canvas>
+          </div>
+        </article>
+
+        <!-- Chart 5: Hora del día -->
+        <article class="chart-card">
+          <div class="chart-card__head">
+            <div class="eyebrow eyebrow--dark">Franja horaria</div>
+            <h2 class="chart-card__title">Muertes por <em>hora del día</em></h2>
+            <p class="chart-card__subtitle">El 35% ocurre entre 6pm y medianoche.</p>
+          </div>
+          <div class="chart-card__canvas-wrap">
+            <canvas id="chart-hour" aria-label="Muertes por franja horaria"></canvas>
+          </div>
+        </article>
+
+        <!-- Chart 6: Medio de transporte (donut) -->
+        <article class="chart-card">
+          <div class="chart-card__head">
+            <div class="eyebrow eyebrow--dark">Vehículo</div>
+            <h2 class="chart-card__title">Por <em>medio de transporte</em></h2>
+            <p class="chart-card__subtitle">65% son motoristas — confirmado Opsevi.</p>
+          </div>
+          <div class="chart-card__canvas-wrap chart-card__canvas-wrap--donut">
+            <canvas id="chart-vehicle" aria-label="Distribución por medio de transporte"></canvas>
+          </div>
+        </article>
+
+        <!-- Chart 7: Género (donut) -->
+        <article class="chart-card">
+          <div class="chart-card__head">
+            <div class="eyebrow eyebrow--dark">Demografía</div>
+            <h2 class="chart-card__title">Por <em>género</em></h2>
+            <p class="chart-card__subtitle">87% de las víctimas son hombres.</p>
+          </div>
+          <div class="chart-card__canvas-wrap chart-card__canvas-wrap--donut">
+            <canvas id="chart-gender" aria-label="Distribución por género"></canvas>
+          </div>
+        </article>
+
+        <!-- Chart 8: Edad -->
+        <article class="chart-card">
+          <div class="chart-card__head">
+            <div class="eyebrow eyebrow--dark">Demografía</div>
+            <h2 class="chart-card__title">Por <em>grupo de edad</em></h2>
+            <p class="chart-card__subtitle">36% son jóvenes de 18 a 29 años.</p>
+          </div>
+          <div class="chart-card__canvas-wrap">
+            <canvas id="chart-age" aria-label="Muertes por grupo de edad"></canvas>
+          </div>
+        </article>
+
+        <!-- Chart 9: Tipo de accidente -->
+        <article class="chart-card">
+          <div class="chart-card__head">
+            <div class="eyebrow eyebrow--dark">Mecanismo</div>
+            <h2 class="chart-card__title">Por <em>tipo de accidente</em></h2>
+            <p class="chart-card__subtitle">Las colisiones representan el 42%.</p>
+          </div>
+          <div class="chart-card__canvas-wrap">
+            <canvas id="chart-accident-type" aria-label="Tipos de accidente"></canvas>
+          </div>
+        </article>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════ -->
+  <!-- CTA + FUENTES                                          -->
+  <!-- ════════════════════════════════════════════════════ -->
+  <section class="section section--cream">
+    <div class="section__inner">
+      <div class="split">
+        <div class="split__left">
+          <div class="eyebrow eyebrow--dark">Fuentes</div>
+          <h2 class="section__title section__title--dark">
+            Datos abiertos, <em>verificables.</em>
+          </h2>
+          <p class="prose">
+            Estos números provienen del Observatorio de Seguridad Vial (Opsevi-INTRANT),
+            DIGESETT, declaraciones públicas de la Presidencia y el Ministerio de Interior,
+            y reportajes verificables de Diario Libre y El Demócrata. Cada cifra está
+            documentada y puede auditarse.
+          </p>
+          <p class="prose">
+            <strong>API pública disponible.</strong> Si haces periodismo de datos,
+            investigación o desarrollas una app — usa nuestros endpoints sin restricción.
+            Licencia CC BY 4.0.
+          </p>
+          <div class="stats-cta-row">
+            <a href="/api-docs.html" class="btn btn--primary btn--lg">Ver API</a>
+            <a href="/app.html" class="btn btn--ghost btn--lg" style="border-color: var(--c-ink); color: var(--c-ink);">Abrir el mapa</a>
+          </div>
+        </div>
+        <div class="split__right">
+          <ul class="sources-list">
+            <li>
+              <span class="sources-list__org">Opsevi · INTRANT</span>
+              <span class="sources-list__desc">Cifras anuales de fallecidos por accidentes de tránsito</span>
+            </li>
+            <li>
+              <span class="sources-list__org">DIGESETT</span>
+              <span class="sources-list__desc">Estadísticas operativas y multas viales</span>
+            </li>
+            <li>
+              <span class="sources-list__org">Presidencia RD</span>
+              <span class="sources-list__desc">Comunicados oficiales 2021-2025</span>
+            </li>
+            <li>
+              <span class="sources-list__org">Min. Interior y Policía</span>
+              <span class="sources-list__desc">Declaraciones públicas (Faride Raful)</span>
+            </li>
+            <li>
+              <span class="sources-list__org">Diario Libre · El Demócrata</span>
+              <span class="sources-list__desc">Reportajes verificables y series investigativas</span>
+            </li>
+            <li>
+              <span class="sources-list__org">datos.gob.do</span>
+              <span class="sources-list__desc">Portal nacional de datos abiertos</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════ -->
+  <!-- FOOTER                                                 -->
+  <!-- ════════════════════════════════════════════════════ -->
+  <footer class="footer">
+    <div class="footer__inner">
+      <div class="footer__col">
+        <div class="brand brand--footer">
+          <span class="brand__mark">▮</span>
+          <span class="brand__name">VialRD</span>
+        </div>
+        <p class="footer__tag">
+          Proyecto cívico independiente.<br />
+          Construido en Santo Domingo, RD.
+        </p>
+      </div>
+      <div class="footer__col">
+        <div class="footer__heading">Producto</div>
+        <a href="/app.html">Mapa</a>
+        <a href="/reportar.html">Reportar</a>
+        <a href="/stats.html">Estadísticas</a>
+        <a href="/api-docs.html">API pública</a>
+      </div>
+      <div class="footer__col">
+        <div class="footer__heading">Datos</div>
+        <a href="https://datos.gob.do" target="_blank" rel="noopener">DIGESETT</a>
+        <a href="https://intrant.gob.do" target="_blank" rel="noopener">INTRANT / Opsevi</a>
+        <a href="https://one.gob.do" target="_blank" rel="noopener">ONE</a>
+      </div>
+      <div class="footer__col">
+        <div class="footer__heading">Comunidad</div>
+        <a href="https://github.com/datard-cybe/vialrd" target="_blank" rel="noopener">GitHub</a>
+        <a href="mailto:contacto@vialrd.com">Email</a>
+      </div>
+    </div>
+    <div class="footer__bottom">
+      <span>© 2026 VialRD · Código AGPL-3.0 · Datos CC BY 4.0</span>
+      <span>Hecho con rabia y esperanza en RD 🇩🇴</span>
+    </div>
+  </footer>
+
+  <!-- Toast para feedback -->
+  <div class="toast" id="toast" hidden></div>
+
+  <script type="module" src="js/stats.js"></script>
+</body>
+</html>
