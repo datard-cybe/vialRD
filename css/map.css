@@ -578,3 +578,51 @@
     pointer-events: none;
   }
 }
+
+/* Foto en popup */
+.popup-photo-link {
+  display: block;
+  margin: -14px -14px 10px;
+  overflow: hidden;
+  max-height: 200px;
+}
+ 
+.popup-photo {
+  width: 100%;
+  height: auto;
+  max-height: 200px;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.3s ease;
+}
+ 
+.popup-photo-link:hover .popup-photo {
+  transform: scale(1.04);
+}
+ 
+/* Badges en título */
+.popup-badge {
+  display: inline-block;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  padding: 2px 6px;
+  border-radius: 2px;
+  margin-left: 6px;
+  vertical-align: middle;
+  text-transform: uppercase;
+}
+ 
+.popup-badge--verified {
+  background: rgba(42, 157, 143, 0.2);
+  color: #2a9d8f;
+  border: 1px solid rgba(42, 157, 143, 0.4);
+}
+ 
+.popup-badge--votes {
+  background: rgba(244, 196, 48, 0.15);
+  color: #c89e1f;
+  border: 1px solid rgba(244, 196, 48, 0.3);
+}
+ 

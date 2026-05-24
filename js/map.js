@@ -1,10 +1,10 @@
 // ===========================================================
-// VialRD — Lógica del mapa interactivo (v2 — filtros reactivos)
-// MapLibre GL JS + OpenStreetMap tiles + Supabase
+// VialRD — Lógica del mapa interactivo (v3 — completo)
+// Incluye: filtros reactivos, FAB mobile, focus query,
+//          realtime WebSocket, popups con foto
 // ===========================================================
 
 // ============ Centroides de las 32 provincias ============
-// (lng, lat aproximados del centro geográfico de cada provincia)
 const PROVINCE_CENTROIDS = {
   'Distrito Nacional':         { lng: -69.9312, lat: 18.4861 },
   'Santo Domingo':             { lng: -69.8571, lat: 18.5001 },
@@ -40,7 +40,7 @@ const PROVINCE_CENTROIDS = {
   'Elías Piña':                { lng: -71.7036, lat: 18.8775 },
 };
 
-// ============ Mock fallback (si Supabase está vacío) ============
+// ============ Mock fallback ============
 const MOCK_PROVINCES_YEARLY = (() => {
   const data = [];
   const baseShare = {
@@ -93,15 +93,15 @@ const MOCK_HAZARDS = [
 // ============ Estado global ============
 const state = {
   map: null,
-  provincesRaw: [],       // [{ province, year, fatalities, motorcycle_fatalities }, ...]
+  provincesRaw: [],
   hazards: [],
   filters: { year: '2025', vehicle: 'motocicleta', province: '' },
   pendingReportLocation: null,
-  // Cache de últimos valores para animar contadores
   lastValues: {},
+  realtimeChannel: null,
 };
 
-// ============ Carga de Supabase opcional ============
+// ============ Supabase opcional ============
 let supabaseAPI = null;
 async function loadSupabase() {
   try {
@@ -113,7 +113,7 @@ async function loadSupabase() {
   }
 }
 
-// ============ Helper: animación de contadores ============
+// ============ Helpers ============
 function animateNumber(elementId, target, duration = 600) {
   const el = document.getElementById(elementId);
   if (!el) return;
@@ -207,7 +207,6 @@ function setupLayers(map) {
       'circle-opacity': 0.65,
       'circle-stroke-color': '#0a0a0a',
       'circle-stroke-width': 1.5,
-      // Transición suave al cambiar radio/color cuando se actualiza la data
       'circle-radius-transition': { duration: 400 },
       'circle-color-transition': { duration: 400 },
     }
@@ -234,35 +233,27 @@ function setupLayers(map) {
     }
   });
 
-  // Incidentes individuales (placeholder, podría conectarse a tabla `accidents_official`)
+  // Deaths placeholder
   map.addSource('deaths', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
   map.addLayer({
-    id: 'deaths-heat',
-    type: 'heatmap',
-    source: 'deaths',
-    maxzoom: 14,
-    layout: { visibility: 'none' },
+    id: 'deaths-heat', type: 'heatmap', source: 'deaths',
+    maxzoom: 14, layout: { visibility: 'none' },
     paint: {
       'heatmap-weight': ['interpolate', ['linear'], ['get', 'weight'], 0, 0, 6, 1],
       'heatmap-intensity': ['interpolate', ['linear'], ['zoom'], 0, 1, 14, 3],
       'heatmap-color': [
         'interpolate', ['linear'], ['heatmap-density'],
-        0, 'rgba(0,0,0,0)',
-        0.2, 'rgba(244,196,48,0.4)',
-        0.5, 'rgba(255,140,66,0.7)',
-        0.8, 'rgba(230,57,70,0.85)',
-        1,   'rgba(184,35,47,1)'
+        0, 'rgba(0,0,0,0)', 0.2, 'rgba(244,196,48,0.4)',
+        0.5, 'rgba(255,140,66,0.7)', 0.8, 'rgba(230,57,70,0.85)',
+        1, 'rgba(184,35,47,1)'
       ],
       'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 0, 8, 14, 50],
       'heatmap-opacity': ['interpolate', ['linear'], ['zoom'], 12, 1, 14, 0.4]
     }
   });
   map.addLayer({
-    id: 'deaths-points',
-    type: 'circle',
-    source: 'deaths',
-    minzoom: 11,
-    layout: { visibility: 'none' },
+    id: 'deaths-points', type: 'circle', source: 'deaths',
+    minzoom: 11, layout: { visibility: 'none' },
     paint: {
       'circle-radius': ['interpolate', ['linear'], ['zoom'], 11, 4, 18, 12],
       'circle-color': '#e63946',
@@ -272,12 +263,10 @@ function setupLayers(map) {
     }
   });
 
-  // Hazards ciudadanos
+  // Hazards
   map.addSource('hazards', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
   map.addLayer({
-    id: 'hazards-bumps',
-    type: 'circle',
-    source: 'hazards',
+    id: 'hazards-bumps', type: 'circle', source: 'hazards',
     filter: ['==', ['get', 'type'], 'policia_acostado_no_senalizado'],
     paint: {
       'circle-radius': ['interpolate', ['linear'], ['zoom'], 7, 4, 16, 14],
@@ -287,9 +276,7 @@ function setupLayers(map) {
     }
   });
   map.addLayer({
-    id: 'hazards-potholes',
-    type: 'circle',
-    source: 'hazards',
+    id: 'hazards-potholes', type: 'circle', source: 'hazards',
     filter: ['==', ['get', 'type'], 'bache'],
     paint: {
       'circle-radius': ['interpolate', ['linear'], ['zoom'], 7, 4, 16, 12],
@@ -299,9 +286,7 @@ function setupLayers(map) {
     }
   });
   map.addLayer({
-    id: 'hazards-other',
-    type: 'circle',
-    source: 'hazards',
+    id: 'hazards-other', type: 'circle', source: 'hazards',
     filter: ['!in', 'type', 'policia_acostado_no_senalizado', 'bache'],
     layout: { visibility: 'none' },
     paint: {
@@ -313,9 +298,8 @@ function setupLayers(map) {
   });
 }
 
-// ============ Cargar datos (Supabase o mock) ============
+// ============ Cargar datos ============
 async function loadData() {
-  // Cargar TODAS las filas de province_yearly_stats sin agregar
   if (supabaseAPI) {
     try {
       const { data, error } = await supabaseAPI.supabase
@@ -331,13 +315,17 @@ async function loadData() {
       console.warn('[VialRD] Error cargando province_yearly_stats:', e.message);
     }
 
-    // Hazards crowdsourced
     try {
       const hazards = await supabaseAPI.getHazardsInBbox([-72.1, 17.4, -68.2, 20.1]);
       if (hazards && hazards.length > 0) {
         state.hazards = hazards.map(h => ({
+          id: h.id,
           lng: h.lng, lat: h.lat, type: h.type, desc: h.description,
-          severity: h.severity, province: h.province
+          severity: h.severity, province: h.province,
+          photo_url: h.photo_url,
+          upvotes: h.upvotes,
+          status: h.status,
+          created_at: h.created_at
         }));
       }
     } catch (e) {
@@ -345,25 +333,22 @@ async function loadData() {
     }
   }
 
-  // Fallback a mock si no hay nada
   if (state.provincesRaw.length === 0) state.provincesRaw = [...MOCK_PROVINCES_YEARLY];
   if (state.hazards.length === 0) state.hazards = [...MOCK_HAZARDS];
 
   applyDataToMap();
 }
 
-// ============ FILTROS REACTIVOS — corazón del refactor ============
+// ============ FILTROS REACTIVOS ============
 function applyDataToMap() {
   const { year, vehicle, province } = state.filters;
   const yearNum = year ? parseInt(year, 10) : null;
   const isMotoOnly = vehicle === 'motocicleta';
 
-  // 1) Filtrar filas raw por año y provincia
   let filtered = state.provincesRaw;
   if (yearNum) filtered = filtered.filter(p => p.year === yearNum);
   if (province) filtered = filtered.filter(p => p.province === province);
 
-  // 2) Agrupar por provincia (sumar años si no hay filtro de año)
   const grouped = {};
   filtered.forEach(p => {
     if (!grouped[p.province]) {
@@ -379,10 +364,8 @@ function applyDataToMap() {
     grouped[p.province].years_count += 1;
   });
 
-  // 3) Decidir qué valor mostrar según filtro de vehículo
   const valueKey = isMotoOnly ? 'motorcycle_fatalities' : 'fatalities';
 
-  // 4) Convertir a GeoJSON usando centroides
   const features = Object.values(grouped)
     .map(g => {
       const centroid = PROVINCE_CENTROIDS[g.province];
@@ -392,7 +375,7 @@ function applyDataToMap() {
         geometry: { type: 'Point', coordinates: [centroid.lng, centroid.lat] },
         properties: {
           province: g.province,
-          fatalities: g[valueKey], // este es el que pinta el círculo
+          fatalities: g[valueKey],
           fatalities_total: g.fatalities,
           motorcycle_fatalities: g.motorcycle_fatalities,
           moto_share: g.fatalities > 0 ? (g.motorcycle_fatalities / g.fatalities) : 0,
@@ -406,7 +389,6 @@ function applyDataToMap() {
 
   const provincesGeo = { type: 'FeatureCollection', features };
 
-  // 5) Hazards
   let hazardsFiltered = state.hazards;
   if (province) {
     hazardsFiltered = hazardsFiltered.filter(h => !h.province || h.province === province);
@@ -420,31 +402,25 @@ function applyDataToMap() {
     }))
   };
 
-  // 6) Aplicar a sources
   if (state.map.getSource('provinces')) state.map.getSource('provinces').setData(provincesGeo);
   if (state.map.getSource('hazards')) state.map.getSource('hazards').setData(hazardsGeo);
 
-  // 7) MÉTRICAS REACTIVAS ===============================
   const totalVisible = features.reduce((s, f) => s + (f.properties.fatalities || 0), 0);
   const totalFat = features.reduce((s, f) => s + (f.properties.fatalities_total || 0), 0);
   const totalMoto = features.reduce((s, f) => s + (f.properties.motorcycle_fatalities || 0), 0);
 
-  // Provincia con más muertes (según el valueKey activo)
   const topProvince = features
     .slice()
     .sort((a, b) => b.properties.fatalities - a.properties.fatalities)[0];
 
-  // % motoristas
   const motoPct = totalFat > 0 ? (totalMoto / totalFat * 100) : 0;
 
-  // Hazards por tipo
   const bumpsCount = hazardsFiltered.filter(h => h.type === 'policia_acostado_no_senalizado').length;
   const potholesCount = hazardsFiltered.filter(h => h.type === 'bache').length;
   const otherCount = hazardsFiltered.filter(h => !['policia_acostado_no_senalizado', 'bache'].includes(h.type)).length;
 
-  // Pintar sidebar
   animateNumber('count-provinces', totalVisible);
-  animateNumber('count-deaths', 0); // futuro: cuando haya tabla accidents_official con coords
+  animateNumber('count-deaths', 0);
   setText('count-bumps', bumpsCount);
   setText('count-potholes', potholesCount);
   setText('count-other', otherCount);
@@ -452,12 +428,10 @@ function applyDataToMap() {
   animateNumber('stat-visible-deaths', totalVisible);
   setText('stat-visible-hazards', hazardsFiltered.length);
 
-  // Nuevas mini-stats reactivas (si existen en el DOM)
   setText('stat-top-province', topProvince ? topProvince.properties.province : '—');
   setText('stat-top-province-value', topProvince ? topProvince.properties.fatalities.toLocaleString('es-DO') : '—');
   setText('stat-moto-pct', totalFat > 0 ? motoPct.toFixed(1) + '%' : '—');
 
-  // Contexto del filtro activo (texto legible)
   const filterCtx = [];
   if (yearNum) filterCtx.push(`año ${yearNum}`); else filterCtx.push('2016-2026');
   if (isMotoOnly) filterCtx.push('motoristas');
@@ -466,22 +440,19 @@ function applyDataToMap() {
   if (province) filterCtx.push(province);
   setText('stat-filter-context', filterCtx.join(' · '));
 
-  // Si filtra por provincia, hacer zoom a esa
   if (province && features.length === 1) {
     const c = features[0].geometry.coordinates;
     state.map.flyTo({ center: c, zoom: 9.5, duration: 800 });
   } else if (!province) {
-    // Volver a vista nacional si quita filtro de provincia
-    // (solo si estaba con zoom alto)
     if (state.map.getZoom() > 8.5) {
       state.map.flyTo({ center: [-70.16, 18.74], zoom: 7.4, duration: 800 });
     }
   }
 }
 
-// ============ Popups al hacer click ============
+// ============ Popups ============
 function setupPopups(map) {
-  // Popup provincias — muestra info reactiva al filtro actual
+  // Popup provincias
   map.on('click', 'provinces-circles', (e) => {
     const p = e.features[0].properties;
     const yearTxt = p.year_filter ? `año ${p.year_filter}` : '2016-2026 (acumulado)';
@@ -512,7 +483,7 @@ function setupPopups(map) {
       .addTo(map);
   });
 
-  // Popups hazards
+  // Popups hazards — AHORA CON FOTO
   const hazardLayers = ['hazards-bumps', 'hazards-potholes', 'hazards-other'];
   hazardLayers.forEach(layerId => {
     map.on('click', layerId, (e) => {
@@ -530,19 +501,50 @@ function setupPopups(map) {
         otro: 'Otro hazard'
       };
       const severityStars = '★'.repeat(p.severity || 1) + '☆'.repeat(5 - (p.severity || 1));
-      new maplibregl.Popup({ closeButton: true, maxWidth: '280px' })
+
+      // Foto opcional
+      let photoHtml = '';
+      if (p.photo_url && p.photo_url !== 'null' && p.photo_url !== 'undefined') {
+        photoHtml = `
+          <a href="${p.photo_url}" target="_blank" rel="noopener" class="popup-photo-link">
+            <img src="${p.photo_url}" alt="Foto del reporte" class="popup-photo" loading="lazy" />
+          </a>
+        `;
+      }
+
+      // Estado verificado
+      let statusBadge = '';
+      if (p.status === 'verified') {
+        statusBadge = '<span class="popup-badge popup-badge--verified">✓ Verificado</span>';
+      } else if (p.upvotes && p.upvotes > 0) {
+        statusBadge = `<span class="popup-badge popup-badge--votes">👍 ${p.upvotes}</span>`;
+      }
+
+      // Fecha
+      let dateText = '';
+      if (p.created_at) {
+        const d = new Date(p.created_at);
+        const now = new Date();
+        const diffH = Math.round((now - d) / (1000 * 60 * 60));
+        if (diffH < 1) dateText = 'Hace minutos';
+        else if (diffH < 24) dateText = `Hace ${diffH}h`;
+        else if (diffH < 24 * 30) dateText = `Hace ${Math.round(diffH/24)}d`;
+        else dateText = d.toLocaleDateString('es-DO');
+      }
+
+      new maplibregl.Popup({ closeButton: true, maxWidth: '300px', className: 'popup-hazard' })
         .setLngLat(e.lngLat)
         .setHTML(`
-          <div class="popup-title">${typeLabels[p.type] || p.type}</div>
+          ${photoHtml}
+          <div class="popup-title">${typeLabels[p.type] || p.type} ${statusBadge}</div>
           <div class="popup-meta">Severidad: ${severityStars}</div>
           <div class="popup-desc">${p.desc || 'Sin descripción'}</div>
-          <div class="popup-desc" style="margin-top:8px; font-size:0.78rem; opacity:0.7">Reporte ciudadano</div>
+          ${dateText ? `<div class="popup-desc" style="margin-top:8px; font-size:0.78rem; opacity:0.7">📅 ${dateText} · Reporte ciudadano</div>` : '<div class="popup-desc" style="margin-top:8px; font-size:0.78rem; opacity:0.7">Reporte ciudadano</div>'}
         `)
         .addTo(map);
     });
   });
 
-  // Cursor pointer
   ['provinces-circles', 'deaths-points', ...hazardLayers].forEach(layerId => {
     map.on('mouseenter', layerId, () => { map.getCanvas().style.cursor = 'pointer'; });
     map.on('mouseleave', layerId, () => { map.getCanvas().style.cursor = ''; });
@@ -602,7 +604,7 @@ function setupLayerToggles(map) {
   });
 }
 
-// ============ Filtros (año, vehículo, provincia) ============
+// ============ Filtros ============
 function setupFilters() {
   ['filter-year', 'filter-vehicle', 'filter-province'].forEach(id => {
     const el = document.getElementById(id);
@@ -610,7 +612,6 @@ function setupFilters() {
     el.addEventListener('change', (e) => {
       const key = id.replace('filter-', '');
       state.filters[key] = e.target.value;
-      // Flash visual en el panel para feedback
       const panel = document.getElementById('mapPanel');
       panel.classList.add('panel-updated');
       setTimeout(() => panel.classList.remove('panel-updated'), 350);
@@ -618,7 +619,6 @@ function setupFilters() {
     });
   });
 
-  // Botón "Limpiar filtros" si existe
   const resetBtn = document.getElementById('filter-reset');
   if (resetBtn) {
     resetBtn.addEventListener('click', () => {
@@ -631,8 +631,7 @@ function setupFilters() {
   }
 }
 
-
-// ============ Panel collapse + FAB sync (mobile) — REEMPLAZA setupPanelToggle ============
+// ============ Panel toggle + FAB sync (mobile) ============
 function setupPanelToggle() {
   const panel = document.getElementById('mapPanel');
   const toggle = document.getElementById('panelToggle');
@@ -641,7 +640,6 @@ function setupPanelToggle() {
 
   function syncFab() {
     if (!fab) return;
-    // Mostrar FAB cuando el panel está colapsado, esconderlo cuando está abierto
     if (panel.classList.contains('collapsed')) {
       fab.classList.remove('is-hidden');
     } else {
@@ -663,11 +661,120 @@ function setupPanelToggle() {
     });
   }
 
-  // Auto-colapsar en mobile al cargar (pa' que el mapa sea visible primero)
+  // Auto-colapsar en mobile al cargar
   if (window.innerWidth <= 768) {
     panel.classList.add('collapsed');
     syncFab();
   }
+}
+
+// ============ Focus desde query string ============
+function setupFocusFromQuery(map) {
+  const params = new URLSearchParams(window.location.search);
+  const lng = parseFloat(params.get('focus_lng'));
+  const lat = parseFloat(params.get('focus_lat'));
+  if (isNaN(lng) || isNaN(lat)) return;
+
+  setTimeout(() => {
+    map.flyTo({ center: [lng, lat], zoom: 16, duration: 1200 });
+    new maplibregl.Marker({ color: '#e63946' })
+      .setLngLat([lng, lat])
+      .addTo(map);
+    new maplibregl.Popup({ closeButton: true, offset: 25 })
+      .setLngLat([lng, lat])
+      .setHTML('<div class="popup-title">Tu reporte</div><div class="popup-desc">Ya está en el mapa, gracias por contribuir.</div>')
+      .addTo(map);
+  }, 1500);
+
+  const cleanUrl = window.location.pathname;
+  window.history.replaceState({}, '', cleanUrl);
+}
+
+// ============ Realtime WebSocket ============
+function setupRealtime(map) {
+  if (!supabaseAPI) {
+    console.log('[VialRD/Realtime] Supabase no conectado, realtime desactivado');
+    return;
+  }
+
+  console.log('[VialRD/Realtime] Suscribiendo a inserts en reports...');
+
+  state.realtimeChannel = supabaseAPI.supabase
+    .channel('reports-live')
+    .on(
+      'postgres_changes',
+      { event: 'INSERT', schema: 'public', table: 'reports' },
+      (payload) => {
+        console.log('[VialRD/Realtime] Nuevo reporte:', payload.new);
+        handleNewReport(payload.new, map);
+      }
+    )
+    .subscribe((status) => {
+      console.log('[VialRD/Realtime] Estado:', status);
+      if (status === 'SUBSCRIBED') {
+        showToast('🔴 En vivo · los nuevos reportes aparecerán al instante', 4000);
+      }
+    });
+
+  window.addEventListener('beforeunload', () => {
+    if (state.realtimeChannel) {
+      supabaseAPI.supabase.removeChannel(state.realtimeChannel);
+    }
+  });
+}
+
+function handleNewReport(report, map) {
+  let lng, lat;
+
+  if (report.location) {
+    if (report.location.coordinates) {
+      [lng, lat] = report.location.coordinates;
+    } else if (typeof report.location === 'string') {
+      const m = report.location.match(/POINT\(([-\d.]+)\s+([-\d.]+)\)/);
+      if (m) { lng = parseFloat(m[1]); lat = parseFloat(m[2]); }
+    }
+  }
+
+  if (!lng || !lat) {
+    console.warn('[VialRD/Realtime] No se pudo extraer coords:', report);
+    return;
+  }
+
+  const newHazard = {
+    id: report.id,
+    lng, lat,
+    type: report.type,
+    desc: report.description || '',
+    severity: report.severity || 3,
+    province: report.province,
+    photo_url: report.photo_url,
+    upvotes: 0,
+    status: report.status || 'pending',
+    created_at: report.created_at
+  };
+  state.hazards.unshift(newHazard);
+
+  applyDataToMap();
+
+  // Pulse marker temporal
+  const pulseMarker = new maplibregl.Marker({ color: '#e63946' })
+    .setLngLat([lng, lat])
+    .addTo(map);
+  setTimeout(() => pulseMarker.remove(), 5000);
+
+  const typeLabels = {
+    bache: 'Bache',
+    policia_acostado_no_senalizado: 'Policía acostado',
+    cruce_peligroso: 'Cruce peligroso',
+    zona_oscura: 'Zona oscura',
+    semaforo_danado: 'Semáforo dañado',
+    senal_caida: 'Señal caída',
+    paso_peatonal_borrado: 'Paso peatonal borrado',
+    otro: 'Otro hazard'
+  };
+  const label = typeLabels[report.type] || 'Hazard';
+  const province = report.province ? ` en ${report.province}` : '';
+  showToast(`🆕 Nuevo: ${label}${province}`, 5000);
 }
 
 // ============ Toast ============
@@ -679,30 +786,6 @@ function showToast(msg, duration = 3500) {
   toast.hidden = false;
   if (toastTimeout) clearTimeout(toastTimeout);
   toastTimeout = setTimeout(() => { toast.hidden = true; }, duration);
-}
-
-function setupFocusFromQuery(map) {
-  const params = new URLSearchParams(window.location.search);
-  const lng = parseFloat(params.get('focus_lng'));
-  const lat = parseFloat(params.get('focus_lat'));
-  if (isNaN(lng) || isNaN(lat)) return;
-
-  map.flyTo({ center: [lng, lat], zoom: 16, duration: 1200 });
-
-  // Marker temporal pa' resaltar el punto
-  const marker = new maplibregl.Marker({ color: '#e63946' })
-    .setLngLat([lng, lat])
-    .addTo(map);
-
-  // Popup con confirmación
-  new maplibregl.Popup({ closeButton: true, offset: 25 })
-    .setLngLat([lng, lat])
-    .setHTML('<div class="popup-title">Tu reporte</div><div class="popup-desc">Ya está en el mapa, gracias por contribuir.</div>')
-    .addTo(map);
-
-  // Limpiar query string sin recargar
-  const cleanUrl = window.location.pathname;
-  window.history.replaceState({}, '', cleanUrl);
 }
 
 // ============ Bootstrap ============
@@ -718,6 +801,8 @@ function setupFocusFromQuery(map) {
     setupLayerToggles(state.map);
     setupFilters();
     setupPanelToggle();
+    setupFocusFromQuery(state.map);
+    setupRealtime(state.map);
     const rowCount = state.provincesRaw.length;
     showToast(`Mapa cargado · ${rowCount} filas · 32 provincias`);
   });
