@@ -16,7 +16,7 @@
 
   <link rel="stylesheet" href="css/style.css" />
   <link rel="stylesheet" href="css/report.css" />
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23E63946'/%3E%3Ctext x='50' y='68' font-family='serif' font-size='60' font-weight='900' text-anchor='middle' fill='white'%3EV%3C/text%3E%3C/svg%3E" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23E63946'/%3E%3Cpath d='M7.5 9 L16 23 L24.5 9' stroke='%23FAFAF7' stroke-width='3' fill='none' stroke-linejoin='miter' stroke-linecap='square'/%3E%3Ccircle cx='16' cy='27' r='1.6' fill='%23FAFAF7'/%3E%3C/svg%3E" />
 
   <script>
     window.__ENV = {
@@ -29,7 +29,11 @@
 
   <header class="topbar">
     <a href="/" class="brand">
-      <span class="brand__mark">▮</span>
+      <svg class="brand__mark" viewBox="0 0 32 32" aria-hidden="true" width="24" height="24">
+        <rect width="32" height="32" fill="#e63946"/>
+        <path d="M7.5 9 L16 23 L24.5 9" stroke="#fafaf7" stroke-width="3" fill="none" stroke-linejoin="miter" stroke-linecap="square"/>
+        <circle cx="16" cy="27" r="1.6" fill="#fafaf7"/>
+      </svg>
       <span class="brand__name">VialRD</span>
     </a>
     <nav class="topnav">
@@ -44,7 +48,7 @@
   <main class="report-shell">
     <div class="report-grid">
 
-      <!-- Columna izquierda: información -->
+      <!-- Columna izquierda -->
       <aside class="report-intro">
         <div class="eyebrow eyebrow--dark">Reporte ciudadano</div>
         <h1 class="report-title">
@@ -71,13 +75,18 @@
           <strong>Anónimo o con cuenta.</strong> No pedimos identidad para reportar.
           Pero si te registras, acumulas puntos por cada reporte verificado.
         </p>
+
+        <div class="report-tip report-tip--accuracy">
+          <strong>💡 Tip de precisión:</strong> si tomas una foto con tu teléfono al momento,
+          leemos las coordenadas GPS embebidas (EXIF) — son más precisas que el GPS del navegador.
+        </div>
       </aside>
 
-      <!-- Columna derecha: formulario -->
+      <!-- Columna derecha -->
       <section class="report-form-wrap">
         <form id="reportForm" class="report-form">
 
-          <!-- Tipo de hazard -->
+          <!-- Tipo -->
           <fieldset class="form-section">
             <legend>Tipo de hazard</legend>
             <div class="hazard-grid">
@@ -155,11 +164,20 @@
               </button>
             </div>
             <div class="location-coords" id="locationCoords" style="display:none">
-              <strong>Ubicación fijada:</strong>
-              <span id="coordsDisplay">—</span>
-              <button type="button" class="link-btn" id="clearLocation">cambiar</button>
+              <div class="location-coords__row">
+                <strong>Ubicación fijada:</strong>
+                <span id="coordsDisplay" class="coords-mono">—</span>
+                <span id="accuracyDisplay" class="accuracy-badge" style="display:none">—</span>
+              </div>
+              <div class="location-coords__source">
+                Fuente: <span id="sourceDisplay">GPS</span>
+                <button type="button" class="link-btn" id="clearLocation">cambiar</button>
+              </div>
             </div>
             <div class="mini-map" id="miniMap" style="display:none"></div>
+            <p class="location-help">
+              Después de fijar, puedes <strong>arrastrar el pin rojo</strong> en el mapa pa' ajustar la posición exacta.
+            </p>
           </fieldset>
 
           <!-- Severidad -->
@@ -186,15 +204,19 @@
 
           <!-- Foto -->
           <fieldset class="form-section">
-            <legend>Foto <span class="optional">(opcional, hasta 5MB)</span></legend>
+            <legend>Foto <span class="optional">(opcional, recomendada · GPS automático)</span></legend>
             <label for="photoInput" class="photo-drop" id="photoDrop">
               <span class="photo-drop__icon">📷</span>
-              <span class="photo-drop__text">Toca o arrastra una foto aquí</span>
+              <span class="photo-drop__text">Toca pa' tomar foto o subir desde tu galería</span>
+              <span class="photo-drop__hint">Si la tomas con la cámara, leemos las coords GPS automáticamente</span>
               <input type="file" id="photoInput" accept="image/*" capture="environment" hidden />
             </label>
             <div class="photo-preview" id="photoPreview" style="display:none">
               <img id="photoPreviewImg" alt="Vista previa" />
-              <button type="button" class="link-btn" id="photoRemove">quitar foto</button>
+              <div class="photo-preview__actions">
+                <span class="photo-meta" id="photoMeta"></span>
+                <button type="button" class="link-btn" id="photoRemove">quitar foto</button>
+              </div>
             </div>
           </fieldset>
 
@@ -211,7 +233,6 @@
 
         </form>
 
-        <!-- Mensaje de éxito -->
         <div class="report-success" id="reportSuccess" style="display:none">
           <div class="report-success__icon">✓</div>
           <h2>Reporte enviado</h2>

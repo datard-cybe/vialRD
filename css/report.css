@@ -348,3 +348,177 @@
   justify-content: center;
   flex-wrap: wrap;
 }
+
+* ===================================================
+   VialRD — Patch para report.css (v2 — alta precisión)
+   AÑADIR AL FINAL DE css/report.css (no reemplazar)
+   =================================================== */
+
+/* ============ Coords display ============ */
+.location-coords {
+  flex-direction: column;
+  align-items: flex-start !important;
+  gap: 8px !important;
+}
+
+.location-coords__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.location-coords__source {
+  font-family: var(--f-mono);
+  font-size: 0.78rem;
+  color: var(--c-ink-mute);
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.coords-mono {
+  font-family: var(--f-mono);
+  font-size: 0.85rem;
+  color: var(--c-ink);
+  letter-spacing: -0.01em;
+}
+
+/* ============ Accuracy badge ============ */
+.accuracy-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--f-mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  padding: 3px 8px;
+  border-radius: 2px;
+  text-transform: uppercase;
+}
+
+.accuracy-badge.acc-good {
+  background: rgba(42, 157, 143, 0.15);
+  color: #1e7367;
+  border: 1px solid rgba(42, 157, 143, 0.4);
+}
+
+.accuracy-badge.acc-medium {
+  background: rgba(244, 196, 48, 0.18);
+  color: #8a6f0f;
+  border: 1px solid rgba(244, 196, 48, 0.5);
+}
+
+.accuracy-badge.acc-low {
+  background: rgba(230, 57, 70, 0.12);
+  color: #b8232f;
+  border: 1px solid rgba(230, 57, 70, 0.4);
+}
+
+/* ============ Location help text ============ */
+.location-help {
+  font-size: 0.82rem;
+  color: var(--c-ink-mute);
+  margin-top: 10px;
+  line-height: 1.4;
+}
+
+.location-help strong {
+  color: var(--c-ink);
+  font-weight: 600;
+}
+
+/* ============ Photo preview enhancements ============ */
+.photo-preview__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.photo-meta {
+  font-family: var(--f-mono);
+  font-size: 0.75rem;
+  color: var(--c-ink-mute);
+  letter-spacing: 0.02em;
+}
+
+.photo-drop__hint {
+  font-family: var(--f-mono);
+  font-size: 0.72rem;
+  color: var(--c-ink-mute);
+  margin-top: 8px;
+  letter-spacing: 0.02em;
+  text-align: center;
+}
+
+/* ============ Spinner inline ============ */
+.spinner-inline {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: spinSm 0.7s linear infinite;
+  vertical-align: middle;
+  margin-right: 6px;
+}
+@keyframes spinSm { to { transform: rotate(360deg); } }
+
+/* ============ Report tip — accuracy variant ============ */
+.report-tip--accuracy {
+  background: rgba(244, 196, 48, 0.12);
+  border-left: 3px solid var(--c-yellow);
+  padding: 12px 16px;
+  margin-top: 16px;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: var(--c-ink-soft);
+}
+
+.report-tip--accuracy strong {
+  color: var(--c-ink);
+}
+
+/* ============ Toast (formulario) ============ */
+.report-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--c-ink);
+  color: var(--c-bg);
+  padding: 12px 20px;
+  font-family: var(--f-mono);
+  font-size: 0.85rem;
+  letter-spacing: 0.02em;
+  z-index: 9999;
+  border-radius: 2px;
+  box-shadow: 0 8px 28px rgba(0,0,0,0.25);
+  max-width: 90vw;
+  animation: toastSlideIn 0.3s ease-out;
+}
+
+.report-toast--error {
+  background: var(--c-accent);
+}
+
+.report-toast--info {
+  background: var(--c-ink);
+}
+
+@keyframes toastSlideIn {
+  from { opacity: 0; transform: translate(-50%, 12px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+@media (max-width: 600px) {
+  .location-coords__row { font-size: 0.85rem; }
+  .coords-mono { font-size: 0.78rem; }
+}

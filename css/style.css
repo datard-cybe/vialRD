@@ -611,3 +611,38 @@ em { font-style: italic; font-family: var(--f-display); }
   .section { padding: var(--s-5) var(--s-3); }
   .hero { padding: var(--s-4) var(--s-3) 0; }
 }
+
+/* ===================================================
+   VialRD — Patch para style.css (v2 — logo SVG)
+   AÑADIR AL FINAL DE css/style.css
+   =================================================== */
+
+/* El nuevo logo es SVG, no carácter unicode.
+   Necesitamos resetear el font-size y ajustar alineación. */
+
+svg.brand__mark {
+  width: 24px;
+  height: 24px;
+  display: inline-block;
+  flex-shrink: 0;
+  transform: translateY(0); /* override del translateY(2px) que era pa' el ▮ */
+}
+
+/* En el footer (fondo oscuro) el rect ya es rojo, no necesita override.
+   Pero aseguramos que se vea: */
+.brand--footer svg.brand__mark {
+  /* nada que cambiar — el SVG ya trae sus colores inline */
+}
+
+/* En desktop hero, ligeramente más grande si lo quieres prominente */
+.topbar .brand svg.brand__mark {
+  width: 26px;
+  height: 26px;
+}
+
+@media (max-width: 600px) {
+  .topbar .brand svg.brand__mark {
+    width: 22px;
+    height: 22px;
+  }
+}

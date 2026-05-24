@@ -631,15 +631,43 @@ function setupFilters() {
   }
 }
 
-// ============ Panel collapse ============
+
+// ============ Panel collapse + FAB sync (mobile) — REEMPLAZA setupPanelToggle ============
 function setupPanelToggle() {
   const panel = document.getElementById('mapPanel');
   const toggle = document.getElementById('panelToggle');
+  const fab = document.getElementById('mapFab');
   if (!toggle) return;
+
+  function syncFab() {
+    if (!fab) return;
+    // Mostrar FAB cuando el panel está colapsado, esconderlo cuando está abierto
+    if (panel.classList.contains('collapsed')) {
+      fab.classList.remove('is-hidden');
+    } else {
+      fab.classList.add('is-hidden');
+    }
+  }
+
   toggle.addEventListener('click', () => {
     panel.classList.toggle('collapsed');
+    syncFab();
     setTimeout(() => state.map && state.map.resize(), 260);
   });
+
+  if (fab) {
+    fab.addEventListener('click', () => {
+      panel.classList.remove('collapsed');
+      syncFab();
+      setTimeout(() => state.map && state.map.resize(), 260);
+    });
+  }
+
+  // Auto-colapsar en mobile al cargar (pa' que el mapa sea visible primero)
+  if (window.innerWidth <= 768) {
+    panel.classList.add('collapsed');
+    syncFab();
+  }
 }
 
 // ============ Toast ============
@@ -651,6 +679,30 @@ function showToast(msg, duration = 3500) {
   toast.hidden = false;
   if (toastTimeout) clearTimeout(toastTimeout);
   toastTimeout = setTimeout(() => { toast.hidden = true; }, duration);
+}
+
+function setupFocusFromQuery(map) {
+  const params = new URLSearchParams(window.location.search);
+  const lng = parseFloat(params.get('focus_lng'));
+  const lat = parseFloat(params.get('focus_lat'));
+  if (isNaN(lng) || isNaN(lat)) return;
+
+  map.flyTo({ center: [lng, lat], zoom: 16, duration: 1200 });
+
+  // Marker temporal pa' resaltar el punto
+  const marker = new maplibregl.Marker({ color: '#e63946' })
+    .setLngLat([lng, lat])
+    .addTo(map);
+
+  // Popup con confirmación
+  new maplibregl.Popup({ closeButton: true, offset: 25 })
+    .setLngLat([lng, lat])
+    .setHTML('<div class="popup-title">Tu reporte</div><div class="popup-desc">Ya está en el mapa, gracias por contribuir.</div>')
+    .addTo(map);
+
+  // Limpiar query string sin recargar
+  const cleanUrl = window.location.pathname;
+  window.history.replaceState({}, '', cleanUrl);
 }
 
 // ============ Bootstrap ============
