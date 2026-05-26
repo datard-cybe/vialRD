@@ -589,6 +589,48 @@
   }
 }
 
+/* ================ Secciones colapsables ================ */
+.panel-eyebrow--toggle {
+  cursor: pointer;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  margin-bottom: 0;
+}
+
+.panel-eyebrow--toggle .filter-reset-btn {
+  margin-left: auto;
+  float: none;
+}
+
+.section-chevron {
+  font-size: 0.75rem;
+  display: inline-block;
+  transition: transform 0.22s ease;
+  opacity: 0.55;
+  flex-shrink: 0;
+}
+
+.section-chevron--push {
+  margin-left: auto;
+}
+
+.panel-section.is-collapsed .section-chevron {
+  transform: rotate(-90deg);
+}
+
+.panel-section-body {
+  overflow: hidden;
+  max-height: 800px;
+  margin-top: 12px;
+  transition: max-height 0.28s ease, margin-top 0.28s ease;
+}
+
+.panel-section.is-collapsed .panel-section-body {
+  max-height: 0;
+  margin-top: 0;
+}
+
 /* Foto en popup */
 .popup-photo-link {
   display: block;

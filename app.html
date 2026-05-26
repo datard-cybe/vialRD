@@ -56,51 +56,57 @@
 
       <!-- Capas -->
       <div class="panel-section">
-        <div class="panel-eyebrow">Capas activas</div>
-        <label class="layer-toggle">
-          <input type="checkbox" id="layer-provinces" checked />
-          <span class="layer-color" style="background: var(--c-accent); border-radius:0"></span>
-          <span class="layer-name">Muertes por provincia · DIGESETT</span>
-          <span class="layer-count" id="count-provinces">—</span>
-        </label>
-        <label class="layer-toggle">
-          <input type="checkbox" id="layer-deaths" />
-          <span class="layer-color" style="background: var(--c-accent)"></span>
-          <span class="layer-name">Incidentes geolocalizados</span>
-          <span class="layer-count" id="count-deaths">—</span>
-        </label>
-        <label class="layer-toggle">
-          <input type="checkbox" id="layer-bumps" checked />
-          <span class="layer-color" style="background: var(--c-yellow)"></span>
-          <span class="layer-name">Policías acostados</span>
-          <span class="layer-count" id="count-bumps">—</span>
-        </label>
-        <label class="layer-toggle">
-          <input type="checkbox" id="layer-potholes" checked />
-          <span class="layer-color" style="background: #ff8c42"></span>
-          <span class="layer-name">Baches</span>
-          <span class="layer-count" id="count-potholes">—</span>
-        </label>
-        <label class="layer-toggle">
-          <input type="checkbox" id="layer-other" />
-          <span class="layer-color" style="background: #888"></span>
-          <span class="layer-name">Otros hazards</span>
-          <span class="layer-count" id="count-other">—</span>
-        </label>
+        <div class="panel-eyebrow panel-eyebrow--toggle" data-target="section-layers">
+          Capas activas <span class="section-chevron section-chevron--push">▾</span>
+        </div>
+        <div class="panel-section-body" id="section-layers">
+          <label class="layer-toggle">
+            <input type="checkbox" id="layer-provinces" checked />
+            <span class="layer-color" style="background: var(--c-accent); border-radius:0"></span>
+            <span class="layer-name">Muertes por provincia · DIGESETT</span>
+            <span class="layer-count" id="count-provinces">—</span>
+          </label>
+          <label class="layer-toggle">
+            <input type="checkbox" id="layer-deaths" />
+            <span class="layer-color" style="background: var(--c-accent)"></span>
+            <span class="layer-name">Incidentes geolocalizados</span>
+            <span class="layer-count" id="count-deaths">—</span>
+          </label>
+          <label class="layer-toggle">
+            <input type="checkbox" id="layer-bumps" checked />
+            <span class="layer-color" style="background: var(--c-yellow)"></span>
+            <span class="layer-name">Policías acostados</span>
+            <span class="layer-count" id="count-bumps">—</span>
+          </label>
+          <label class="layer-toggle">
+            <input type="checkbox" id="layer-potholes" checked />
+            <span class="layer-color" style="background: #ff8c42"></span>
+            <span class="layer-name">Baches</span>
+            <span class="layer-count" id="count-potholes">—</span>
+          </label>
+          <label class="layer-toggle">
+            <input type="checkbox" id="layer-other" />
+            <span class="layer-color" style="background: #888"></span>
+            <span class="layer-name">Otros hazards</span>
+            <span class="layer-count" id="count-other">—</span>
+          </label>
 
-        <div class="panel-note">
-          📍 <strong>Cómo leer el mapa:</strong> los círculos rojos representan el total
-          en <em>toda la provincia</em>, dibujados en el centro geográfico.
-          No son ubicaciones exactas de cada incidente.
+          <div class="panel-note">
+            📍 <strong>Cómo leer el mapa:</strong> los círculos rojos representan el total
+            en <em>toda la provincia</em>, dibujados en el centro geográfico.
+            No son ubicaciones exactas de cada incidente.
+          </div>
         </div>
       </div>
 
       <!-- Filtros -->
       <div class="panel-section">
-        <div class="panel-eyebrow">
+        <div class="panel-eyebrow panel-eyebrow--toggle" data-target="section-filters">
           Filtros · Muertes
           <button class="filter-reset-btn" id="filter-reset" title="Limpiar todos los filtros">Limpiar</button>
+          <span class="section-chevron">▾</span>
         </div>
+        <div class="panel-section-body" id="section-filters">
         <label class="filter-row">
           <span>Año</span>
           <select id="filter-year">
@@ -145,33 +151,38 @@
             <option>San Juan</option>
           </select>
         </label>
+        </div>
       </div>
 
       <!-- Stats reactivas -->
       <div class="panel-section panel-stats">
-        <div class="panel-eyebrow">Resumen reactivo</div>
-        <div class="filter-context" id="stat-filter-context">2025 · motoristas</div>
-
-        <div class="mini-stat mini-stat--hero">
-          <span class="mini-stat__num" id="stat-visible-deaths">—</span>
-          <span class="mini-stat__label">fallecidos en filtro actual</span>
+        <div class="panel-eyebrow panel-eyebrow--toggle" data-target="section-stats">
+          Resumen reactivo <span class="section-chevron section-chevron--push">▾</span>
         </div>
+        <div class="panel-section-body" id="section-stats">
+          <div class="filter-context" id="stat-filter-context">2025 · motoristas</div>
 
-        <div class="mini-stat-grid">
-          <div class="mini-stat mini-stat--sm">
-            <span class="mini-stat__num" id="stat-top-province-value">—</span>
-            <span class="mini-stat__label">
-              en <strong id="stat-top-province">—</strong>
-              <em>(provincia más letal)</em>
-            </span>
+          <div class="mini-stat mini-stat--hero">
+            <span class="mini-stat__num" id="stat-visible-deaths">—</span>
+            <span class="mini-stat__label">fallecidos en filtro actual</span>
           </div>
-          <div class="mini-stat mini-stat--sm">
-            <span class="mini-stat__num" id="stat-moto-pct">—</span>
-            <span class="mini-stat__label">son motoristas</span>
-          </div>
-          <div class="mini-stat mini-stat--sm">
-            <span class="mini-stat__num" id="stat-visible-hazards">—</span>
-            <span class="mini-stat__label">hazards reportados</span>
+
+          <div class="mini-stat-grid">
+            <div class="mini-stat mini-stat--sm">
+              <span class="mini-stat__num" id="stat-top-province-value">—</span>
+              <span class="mini-stat__label">
+                en <strong id="stat-top-province">—</strong>
+                <em>(provincia más letal)</em>
+              </span>
+            </div>
+            <div class="mini-stat mini-stat--sm">
+              <span class="mini-stat__num" id="stat-moto-pct">—</span>
+              <span class="mini-stat__label">son motoristas</span>
+            </div>
+            <div class="mini-stat mini-stat--sm">
+              <span class="mini-stat__num" id="stat-visible-hazards">—</span>
+              <span class="mini-stat__label">hazards reportados</span>
+            </div>
           </div>
         </div>
       </div>
@@ -207,5 +218,13 @@
   </main>
 
   <script type="module" src="js/map.js"></script>
+  <script>
+    document.querySelectorAll('.panel-eyebrow--toggle').forEach(eyebrow => {
+      eyebrow.addEventListener('click', e => {
+        if (e.target.closest('button')) return;
+        eyebrow.closest('.panel-section').classList.toggle('is-collapsed');
+      });
+    });
+  </script>
 </body>
 </html>
