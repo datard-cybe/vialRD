@@ -54,6 +54,14 @@
     <aside class="map-panel" id="mapPanel">
       <button class="panel-toggle" id="panelToggle" aria-label="Colapsar panel">‹</button>
 
+      <!-- Header con botón de cierre visible -->
+      <div class="panel-header">
+        <span class="panel-header__brand">VialRD</span>
+        <button class="panel-close-btn" id="panelCloseBtn" aria-label="Ocultar panel">
+          Ocultar panel ›
+        </button>
+      </div>
+
       <!-- Capas -->
       <div class="panel-section">
         <div class="panel-eyebrow panel-eyebrow--toggle" data-target="section-layers">
@@ -224,6 +232,10 @@
         if (e.target.closest('button')) return;
         eyebrow.closest('.panel-section').classList.toggle('is-collapsed');
       });
+    });
+
+    document.getElementById('panelCloseBtn').addEventListener('click', () => {
+      document.getElementById('panelToggle').click();
     });
   </script>
 </body>
