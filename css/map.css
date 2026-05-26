@@ -504,9 +504,9 @@
    del mapa, siempre visible.
    =================================================== */
 
-/* ============ FAB pa' reabrir panel en mobile ============ */
+/* ============ FAB pa' reabrir panel (mobile y desktop) ============ */
 .map-fab {
-  display: none;
+  display: flex;
   position: fixed;
   top: 76px;
   left: 12px;
