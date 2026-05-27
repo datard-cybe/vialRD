@@ -595,6 +595,13 @@ function setupLayerToggles(map) {
   bindings.forEach(({ input, layers }) => {
     const el = document.getElementById(input);
     if (!el) return;
+
+    // FIX: sincronizar el estado inicial del checkbox con el mapa
+    const initialVisibility = el.checked ? 'visible' : 'none';
+    layers.forEach(l => {
+      if (map.getLayer(l)) map.setLayoutProperty(l, 'visibility', initialVisibility);
+    });
+
     el.addEventListener('change', () => {
       const visibility = el.checked ? 'visible' : 'none';
       layers.forEach(l => {
