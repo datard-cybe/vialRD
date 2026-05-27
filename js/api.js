@@ -174,3 +174,51 @@ export async function getCurrentUser() {
   const { data: { user } } = await supabase.auth.getUser();
   return user;
 }
+
+// ===========================================================
+// PATCH PARA js/api.js — agregar al FINAL del archivo
+// ===========================================================
+
+// ============================================================
+// VOTACIÓN — confirmar / resolver / rechazar un reporte
+// ============================================================
+//
+// response puede ser:
+//   - 'yes'      → "sigue ahí, confirmo el hazard"
+//   - 'resolved' → "ya lo arreglaron / ya no está"
+//   - 'no'       → "es un reporte falso/erróneo" (raro)
+//
+// Devuelve { success, vote_count, status, message }
+//
+export async function confirmReport(reportId, response = 'yes') {
+  const { data, error } = await supabase.rpc('confirm_report', {
+    p_report_id: reportId,
+    p_response: response
+  });
+  if (error) throw error;
+  return data;
+}
+
+// ============================================================
+// Tracking de votos en localStorage (1 voto por usuario por reporte)
+// ============================================================
+const VOTES_KEY = 'vialrd_votes';
+
+export function hasUserVoted(reportId) {
+  try {
+    const votes = JSON.parse(localStorage.getItem(VOTES_KEY) || '{}');
+    return !!votes[reportId];
+  } catch {
+    return false;
+  }
+}
+
+export function markUserVoted(reportId, response) {
+  try {
+    const votes = JSON.parse(localStorage.getItem(VOTES_KEY) || '{}');
+    votes[reportId] = { response, ts: Date.now() };
+    localStorage.setItem(VOTES_KEY, JSON.stringify(votes));
+  } catch (e) {
+    console.warn('No se pudo guardar voto local:', e);
+  }
+}
