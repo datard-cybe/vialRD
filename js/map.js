@@ -1,7 +1,7 @@
 // ===========================================================
-// VialRD — Lógica del mapa interactivo (v3 — completo)
+// VialRD — Lógica del mapa interactivo (v4)
 // Incluye: filtros reactivos, FAB mobile, focus query,
-//          realtime WebSocket, popups con foto
+//          realtime WebSocket, popups con foto + VOTACIÓN
 // ===========================================================
 
 // ============ Centroides de las 32 provincias ============
@@ -188,7 +188,6 @@ function initMap() {
 
 // ============ Sources y layers ============
 function setupLayers(map) {
-  // Provincias
   map.addSource('provinces', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
 
   map.addLayer({
@@ -233,7 +232,6 @@ function setupLayers(map) {
     }
   });
 
-  // Deaths placeholder
   map.addSource('deaths', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
   map.addLayer({
     id: 'deaths-heat', type: 'heatmap', source: 'deaths',
@@ -263,7 +261,6 @@ function setupLayers(map) {
     }
   });
 
-  // Hazards
   map.addSource('hazards', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
   map.addLayer({
     id: 'hazards-bumps', type: 'circle', source: 'hazards',
@@ -324,6 +321,9 @@ async function loadData() {
           severity: h.severity, province: h.province,
           photo_url: h.photo_url,
           upvotes: h.upvotes,
+          vote_count: h.vote_count,
+          retention_tier: h.retention_tier,
+          expires_at: h.expires_at,
           status: h.status,
           created_at: h.created_at
         }));
@@ -483,7 +483,7 @@ function setupPopups(map) {
       .addTo(map);
   });
 
-  // Popups hazards — AHORA CON FOTO
+  // Popups hazards — CON FOTO + BOTONES DE VOTACIÓN
   const hazardLayers = ['hazards-bumps', 'hazards-potholes', 'hazards-other'];
   hazardLayers.forEach(layerId => {
     map.on('click', layerId, (e) => {
@@ -514,13 +514,14 @@ function setupPopups(map) {
 
       // Estado verificado
       let statusBadge = '';
-      if (p.status === 'verified') {
+      const voteCount = parseInt(p.vote_count || p.upvotes || 0, 10);
+      if (p.status === 'verified' || p.retention_tier === 'evergreen') {
         statusBadge = '<span class="popup-badge popup-badge--verified">✓ Verificado</span>';
-      } else if (p.upvotes && p.upvotes > 0) {
-        statusBadge = `<span class="popup-badge popup-badge--votes">👍 ${p.upvotes}</span>`;
+      } else if (voteCount > 0) {
+        statusBadge = `<span class="popup-badge popup-badge--votes">👍 ${voteCount}</span>`;
       }
 
-      // Fecha
+      // Fecha relativa
       let dateText = '';
       if (p.created_at) {
         const d = new Date(p.created_at);
@@ -532,19 +533,92 @@ function setupPopups(map) {
         else dateText = d.toLocaleDateString('es-DO');
       }
 
-      new maplibregl.Popup({ closeButton: true, maxWidth: '300px', className: 'popup-hazard' })
+      // Días pa' expirar
+      let expireInfo = '';
+      if (p.expires_at && p.retention_tier !== 'evergreen') {
+        const expireDate = new Date(p.expires_at);
+        const daysLeft = Math.round((expireDate - new Date()) / (1000 * 60 * 60 * 24));
+        if (daysLeft > 0) {
+          expireInfo = `<div class="popup-expire">⏳ Expira en ${daysLeft} día${daysLeft !== 1 ? 's' : ''}</div>`;
+        }
+      }
+
+      // ¿El usuario ya votó este reporte?
+      const reportId = p.id;
+      const alreadyVoted = supabaseAPI && supabaseAPI.hasUserVoted ? supabaseAPI.hasUserVoted(reportId) : false;
+
+      // Botones de votación
+      let voteButtons = '';
+      if (reportId && !alreadyVoted) {
+        voteButtons = `
+          <div class="popup-vote-row">
+            <button class="popup-vote-btn popup-vote-btn--yes" data-report-id="${reportId}" data-response="yes">
+              ✓ Sigue ahí
+            </button>
+            <button class="popup-vote-btn popup-vote-btn--resolved" data-report-id="${reportId}" data-response="resolved">
+              🔧 Ya lo arreglaron
+            </button>
+          </div>
+          <div class="popup-vote-help">
+            Confirma o reporta si ya está resuelto. 3 confirmaciones lo verifican.
+          </div>
+        `;
+      } else if (alreadyVoted) {
+        voteButtons = `
+          <div class="popup-vote-row">
+            <div class="popup-vote-thanks">✓ Ya votaste por este reporte. Gracias 🙌🏼</div>
+          </div>
+        `;
+      }
+
+      const popup = new maplibregl.Popup({ closeButton: true, maxWidth: '320px', className: 'popup-hazard' })
         .setLngLat(e.lngLat)
         .setHTML(`
           ${photoHtml}
           <div class="popup-title">${typeLabels[p.type] || p.type} ${statusBadge}</div>
           <div class="popup-meta">Severidad: ${severityStars}</div>
-          <div class="popup-desc">${p.desc || 'Sin descripción'}</div>
+          <div class="popup-desc">${p.desc || p.description || 'Sin descripción'}</div>
           ${dateText ? `<div class="popup-desc" style="margin-top:8px; font-size:0.78rem; opacity:0.7">📅 ${dateText} · Reporte ciudadano</div>` : '<div class="popup-desc" style="margin-top:8px; font-size:0.78rem; opacity:0.7">Reporte ciudadano</div>'}
+          ${expireInfo}
+          ${voteButtons}
         `)
         .addTo(map);
+
+      // Manejar clicks de votación
+      setTimeout(() => {
+        const popupEl = popup.getElement();
+        if (!popupEl) return;
+        popupEl.querySelectorAll('.popup-vote-btn').forEach(btn => {
+          btn.addEventListener('click', async () => {
+            const id = btn.dataset.reportId;
+            const response = btn.dataset.response;
+            btn.disabled = true;
+            btn.textContent = 'Enviando…';
+            try {
+              if (!supabaseAPI || !supabaseAPI.confirmReport) {
+                throw new Error('Función no disponible');
+              }
+              const result = await supabaseAPI.confirmReport(id, response);
+              supabaseAPI.markUserVoted(id, response);
+              showToast(result.message || '✓ Voto registrado', 3500);
+
+              const voteRow = btn.closest('.popup-vote-row');
+              if (voteRow) {
+                voteRow.innerHTML = '<div class="popup-vote-thanks">✓ Gracias por confirmar 🙌🏼</div>';
+              }
+            } catch (err) {
+              console.error('[VialRD] Error al votar:', err);
+              showToast('Error al enviar voto: ' + err.message, 4000);
+              btn.disabled = false;
+              btn.textContent = response === 'yes' ? '✓ Sigue ahí' : '🔧 Ya lo arreglaron';
+            }
+          });
+        });
+      }, 100);
     });
   });
 
+  // Cursor pointer en todas las capas clicables
   ['provinces-circles', 'deaths-points', ...hazardLayers].forEach(layerId => {
     map.on('mouseenter', layerId, () => { map.getCanvas().style.cursor = 'pointer'; });
     map.on('mouseleave', layerId, () => { map.getCanvas().style.cursor = ''; });
@@ -668,7 +742,6 @@ function setupPanelToggle() {
     });
   }
 
-  // Auto-colapsar en mobile al cargar
   if (window.innerWidth <= 768) {
     panel.classList.add('collapsed');
     syncFab();
@@ -756,6 +829,9 @@ function handleNewReport(report, map) {
     province: report.province,
     photo_url: report.photo_url,
     upvotes: 0,
+    vote_count: 0,
+    retention_tier: report.retention_tier || 'new',
+    expires_at: report.expires_at,
     status: report.status || 'pending',
     created_at: report.created_at
   };
@@ -763,7 +839,6 @@ function handleNewReport(report, map) {
 
   applyDataToMap();
 
-  // Pulse marker temporal
   const pulseMarker = new maplibregl.Marker({ color: '#e63946' })
     .setLngLat([lng, lat])
     .addTo(map);
