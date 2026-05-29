@@ -262,6 +262,12 @@
       tbody.querySelectorAll('.btn-remove').forEach(btn => {
         btn.addEventListener('click', () => removeReport(btn.dataset.id));
       });
+      tbody.querySelectorAll('.btn-extend').forEach(btn => {
+        btn.addEventListener('click', () => extendReport(btn.dataset.id));
+      });
+      tbody.querySelectorAll('.btn-evergreen').forEach(btn => {
+        btn.addEventListener('click', () => makeEvergreen(btn.dataset.id));
+      });
       tbody.querySelectorAll('.photo-thumb').forEach(img => {
         img.addEventListener('click', () => {
           document.getElementById('photoModalImg').src = img.src;
@@ -302,6 +308,8 @@
           <td style="font-family:var(--f-mono);font-size:0.78rem;color:var(--c-ink-mute)">${createdAgo}</td>
           <td class="row-actions">
             ${canRemove ? `<button class="btn-remove btn-danger" data-id="${r.id}">Quitar</button>` : ''}
+            <button class="btn-extend" data-id="${r.id}">+ días</button>
+            ${r.retention_tier !== 'evergreen' ? `<button class="btn-evergreen" data-id="${r.id}">∞ Fijar</button>` : ''}
             <a href="/app.html?focus_lng=${r.lng}&focus_lat=${r.lat}" target="_blank"><button>Ver en mapa</button></a>
           </td>
         </tr>
@@ -340,6 +348,33 @@
         loadReports(currentFilter);
       } else {
         showToast('No autorizado', true);
+      }
+    }
+
+    async function extendReport(id) {
+      const raw = prompt('¿Cuántos días extender la vigencia?', '30');
+      if (raw === null) return;
+      const days = parseInt(raw, 10);
+      if (!Number.isFinite(days) || days < 1) { showToast('Pon un número de días válido', true); return; }
+      const { data, error } = await supabase.rpc('admin_extend_retention', { p_report_id: id, p_days: days });
+      if (error) { showToast('Error: ' + error.message, true); return; }
+      if (data && data.success) {
+        showToast(data.message || '✓ Vigencia extendida');
+        loadReports(currentFilter);
+      } else {
+        showToast((data && data.message) || 'No autorizado', true);
+      }
+    }
+
+    async function makeEvergreen(id) {
+      if (!confirm('¿Marcar este reporte como permanente? No expirará nunca.')) return;
+      const { data, error } = await supabase.rpc('admin_extend_retention', { p_report_id: id, p_days: 0, p_evergreen: true });
+      if (error) { showToast('Error: ' + error.message, true); return; }
+      if (data && data.success) {
+        showToast(data.message || '✓ Marcado como permanente');
+        loadReports(currentFilter);
+      } else {
+        showToast((data && data.message) || 'No autorizado', true);
       }
     }
 
